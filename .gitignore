@@ -1,0 +1,18 @@
+# R
+.Rhistory
+.RData
+.Rproj.user/
+
+# Data (rå og tunge filer)
+data_raw/
+data_processed/
+
+# Output & artefakter
+output/
+plots/
+
+# Modeller
+models/*.rds
+
+# OS
+.DS_Store
