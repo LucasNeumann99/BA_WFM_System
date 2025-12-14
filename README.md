@@ -13,3 +13,4 @@ Denne mappe er **den officielle BA-projektmappe**.
 - output/forecasts/        → Forecasts til Erlang
 - output/staffing/         → Optimerede bemandingsplaner
 
+# BA_WFM_System
