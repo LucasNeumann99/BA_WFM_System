@@ -14,3 +14,4 @@ Denne mappe er **den officielle BA-projektmappe**.
 - output/staffing/         → Optimerede bemandingsplaner
 
 # BA_WFM_System
+# BA_WFM_System
