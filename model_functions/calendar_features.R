@@ -1,65 +1,50 @@
-# model_functions/calendar_features.R
 library(tidyverse)
 library(lubridate)
 library(here)
 
-# ---------------------------------------------------------
-# Team → Country mapping
-# ---------------------------------------------------------
-team_country_map <- tibble(
-  team = c(
-    "Team SE 1, Travelcare",
-    "Team SE 2, Travelcare",
-    "Team DK, Travelcare",
-    "Team NO, Travelcare",
-    "Team FI, Travelcare"
-  ),
-  country = c("SE", "SE", "DK", "NO", "FI")
-)
-
-# ---------------------------------------------------------
-# Load holiday tables
-# ---------------------------------------------------------
-load_holidays <- function() {
-  list.files(
-    here("data_raw", "holidays"),
-    full.names = TRUE
-  ) %>%
-    map_dfr(read_csv, show_col_types = FALSE) %>%
+# --------------------------------------------------
+# Generic holiday loader (ALL countries)
+# --------------------------------------------------
+add_country_holidays <- function(df, country_code, date_col = "ds") {
+  
+  # ---- load holidays for given country ----
+  path <- here(
+    "data_raw", "holidays",
+    paste0("holidays_", country_code, ".csv")
+  )
+  
+  holidays <- readr::read_csv(path, show_col_types = FALSE) %>%
     mutate(
       start_date = as.Date(start_date),
       end_date   = as.Date(end_date)
     )
-}
-
-# ---------------------------------------------------------
-# Add holidays to time series
-# ---------------------------------------------------------
-add_country_holidays <- function(df, date_col = "ds") {
   
-  holidays <- load_holidays()
+  # ---- extract dates from df ----
+  dates <- as.Date(df[[date_col]])
   
-  df <- df %>%
-    left_join(team_country_map, by = "team") %>%
-    mutate(date = as.Date(.data[[date_col]]))
+  # ---- initialise holiday flags ----
+  holiday_types <- unique(holidays$holiday)
   
-  # Opret kolonner
-  for (h in unique(holidays$holiday)) {
+  for (h in holiday_types) {
     df[[h]] <- FALSE
   }
   
-  # Markér ferieperioder
+  # ---- mark intervals ----
   for (i in seq_len(nrow(holidays))) {
-    h <- holidays[i, ]
-    idx <- df$country == h$country &
-      df$date >= h$start_date &
-      df$date <= h$end_date
-    df[[h$holiday]][idx] <- TRUE
+    idx <- which(
+      dates >= holidays$start_date[i] &
+        dates <= holidays$end_date[i]
+    )
+    df[idx, holidays$holiday[i]] <- TRUE
   }
   
-  df %>%
+  # ---- combined holiday flag ----
+  df <- df %>%
     mutate(
-      Holiday_any = as.integer(if_any(where(is.logical), ~ .x))
-    ) %>%
-    select(-date)
+      Holiday_any = as.integer(
+        if_any(all_of(holiday_types), identity)
+      )
+    )
+  
+  return(df)
 }
