@@ -45,7 +45,7 @@ future_time <- tibble(
 )
 
 # ---- cartesian grid: team x future time ----
-future_grid <- tidyr::crossing(
+future_grid <- crossing(
   teams,
   future_time
 )
