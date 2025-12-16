@@ -5,10 +5,9 @@
 # - Produces 2 plots per team:
 #     1) Forecast vs actual
 #     2) Residuals over time
-# - Saves metrics in:
-#     output/diagnostics/metrics_final_glm.csv
-# - Saves plots in:
-#     figures/final/glm/<team>/
+# - Saves metrics as:
+#     - CSV (til BA/rapport): output/diagnostics/metrics_final_glm.csv
+#     - RDS (til modeller/teknik): results/final/glm/metrics_final_glm.rds
 # ============================================================
 
 library(tidyverse)
@@ -26,21 +25,16 @@ teams <- unique(fc$team)
 # ------------------------------------------------------------
 # Directory setup
 # ------------------------------------------------------------
-metrics_dir <- here("output", "diagnostics")
-fig_dir     <- here("figures", "final", "glm")
+metrics_csv_dir  <- here("output", "diagnostics")   # til BA / rapport
+metrics_rds_dir  <- here("results", "final", "glm") # teknisk lagring
+fig_dir          <- here("figures", "final", "glm")
 
-dir.create(metrics_dir, recursive = TRUE, showWarnings = FALSE)
-dir.create(fig_dir, recursive = TRUE, showWarnings = FALSE)
-
-# ------------------------------------------------------------
-# Filter to operational hours (07–22)
-# ------------------------------------------------------------
-fc <- fc %>%
-  mutate(hour = as.numeric(hour)) %>%
-  filter(hour >= 7, hour <= 22)
+dir.create(metrics_csv_dir, recursive = TRUE, showWarnings = FALSE)
+dir.create(metrics_rds_dir, recursive = TRUE, showWarnings = FALSE)
+dir.create(fig_dir,         recursive = TRUE, showWarnings = FALSE)
 
 # ------------------------------------------------------------
-# Metric functions
+# Metric functions (24h – ingen 07–22 filter)
 # ------------------------------------------------------------
 compute_metrics <- function(df) {
   df %>%
@@ -64,7 +58,11 @@ plot_forecast_vs_actual <- function(df, tm) {
     geom_line(aes(y = y_hat, colour = "NegBin")) +
     scale_colour_manual(values = c("Actual" = "black", "NegBin" = "red")) +
     theme_minimal() +
-    labs(title = paste("Final GLM Forecast –", tm), y = "Calls", colour = "")
+    labs(
+      title = paste("Final GLM Forecast –", tm),
+      y = "Calls",
+      colour = ""
+    )
 }
 
 plot_residuals <- function(df, tm) {
@@ -72,7 +70,10 @@ plot_residuals <- function(df, tm) {
     geom_line() +
     geom_hline(yintercept = 0, linetype = "dashed") +
     theme_minimal() +
-    labs(title = paste("Residuals –", tm), y = "Residual")
+    labs(
+      title = paste("Residuals –", tm),
+      y = "Residual"
+    )
 }
 
 # ------------------------------------------------------------
@@ -110,16 +111,24 @@ for (tm in teams) {
 }
 
 # ------------------------------------------------------------
-# Save metrics (CSV = BA / report)
+# Save metrics (CSV = BA / rapport, RDS = teknisk)
 # ------------------------------------------------------------
 metrics_final <- bind_rows(metrics_all)
 
-write_csv(
+# CSV til rapport
+readr::write_csv(
   metrics_final,
-  file.path(metrics_dir, "metrics_final_glm.csv")
+  file.path(metrics_csv_dir, "metrics_final_glm.csv")
+)
+
+# RDS til intern brug
+saveRDS(
+  metrics_final,
+  file.path(metrics_rds_dir, "metrics_final_glm.rds")
 )
 
 message("✔ Plotting complete.")
-message("✔ Metrics saved to: output/diagnostics/metrics_final_glm.csv")
+message("✔ Metrics saved to: ")
+message("  - CSV: output/diagnostics/metrics_final_glm.csv")
+message("  - RDS: results/final/glm/metrics_final_glm.rds")
 print(metrics_final)
-
