@@ -1,5 +1,5 @@
 # ============================================================
-# 10_evaluate_test_forecasts.R
+# 11_evaluate_test_forecasts.R
 # ------------------------------------------------------------
 # Evaluerer baseline GLM (Poisson & NegBin) på testperioden
 # + Tilføjer Explained R² og McFadden pseudo-R²
@@ -9,6 +9,7 @@
 library(tidyverse)
 library(lubridate)
 library(here)
+library(viridis)
 
 # ---- paths ----
 fc_path      <- here("data_processed", "fc_test_glm_by_team.rds")

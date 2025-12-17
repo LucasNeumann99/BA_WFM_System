@@ -1,5 +1,5 @@
 # ============================================================
-# 07_add_lag_features.R
+# 08_add_lag_features.R
 # ------------------------------------------------------------
 # Formål:
 # - Tilføje lag- og rullende features pr. team
@@ -14,7 +14,7 @@ library(here)
 library(zoo)
 
 # ---- paths ----
-in_path  <- here("data_processed", "ts_hourly_all_teams_features.rds")
+in_path  <- here("data_processed", "ts_hourly_all_teams_struct_adj.rds")
 out_path <- here("data_processed", "ts_hourly_all_teams_lags.rds")
 
 # ---- load ----

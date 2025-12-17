@@ -1,5 +1,5 @@
 # ============================================================
-# 09_train_baseline_models.R
+# 10_train_baseline_models.R
 # ------------------------------------------------------------
 # Formål:
 # - Træne simple, forklarbare baseline-modeller (Poisson & NegBin)
@@ -20,7 +20,7 @@ filter <- dplyr::filter
 lag    <- dplyr::lag
 
 # ---- paths ----
-hist_path        <- here("data_processed", "ts_hourly_all_teams_features.rds")
+in_path        <- here("data_processed", "ts_hourly_all_teams_struct_adj.rds")
 models_out_path  <- here("models", "baseline_glm_by_team.rds")
 fc_test_out_path <- here("data_processed", "fc_test_glm_by_team.rds")
 metrics_out_path <- here("data_processed", "metrics_test_glm_by_team.rds")
@@ -31,7 +31,7 @@ if (!dir.exists(here("models"))) {
 }
 
 # ---- load historical data ----
-ts_hist <- readRDS(hist_path)
+ts_hist <- readRDS(in_path)
 
 # sanity
 stopifnot(all(c("team", "ds", "y") %in% names(ts_hist)))

@@ -1,5 +1,5 @@
 # ============================================================
-# 13_train_final_glm.R (CLEAN + CORRECT)
+# 14_train_final_glm.R (CLEAN + CORRECT)
 # FINAL Negative Binomial GLM baseline
 # - Train 24h
 # - Save models + forecasts
@@ -15,7 +15,7 @@ message("Training FINAL NegBin GLM baseline (24h).")
 # ------------------------------------------------------------
 # Paths
 # ------------------------------------------------------------
-ts_path   <- here("data_processed", "ts_hourly_all_teams_features.rds")
+ts_path   <- here("data_processed", "ts_hourly_all_teams_struct_adj.rds")
 out_model <- here("models", "final_glm_negbin_by_team.rds")
 out_fc    <- here("results", "final", "glm", "fc_final_glm_negbin.rds")
 

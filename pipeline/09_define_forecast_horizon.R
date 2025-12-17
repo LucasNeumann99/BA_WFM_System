@@ -1,5 +1,5 @@
 # ============================================================
-# 08_define_forecast_horizon.R
+# 09_define_forecast_horizon.R
 # ------------------------------------------------------------
 # Formål:
 # - Definere fremtidig forecast-horisont (hourly)
@@ -15,7 +15,7 @@ library(here)
 source(here("model_functions", "calendar_features.R"))
 
 # ---- paths ----
-in_path  <- here("data_processed", "ts_hourly_all_teams_features.rds")
+in_path  <- here("data_processed", "ts_hourly_all_teams_struct_adj.rds")
 out_path <- here("data_processed", "ts_future_all_teams_features.rds")
 
 # ---- load historical data (for team list only) ----
