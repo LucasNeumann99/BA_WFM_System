@@ -16,8 +16,24 @@ stopifnot(all(c(
   "call_responsible_department_l5"
 ) %in% names(calls)))
 
+# ---- parametre til strukturel filtrering ----
+team_no         <- "Team NO 1, Travelcare"
+storebrand_code <- "C370"
+
+# ---- fjern Storebrand fra Team NO på call-niveau ----
+calls_filtered <- calls %>%
+  filter(
+    !(call_responsible_department_l5 == team_no &
+        common_customer_code == storebrand_code)
+  )
+
+message("Total calls before filter: ", nrow(calls))
+message("Total calls after  filter: ", nrow(calls_filtered))
+message("Removed (Team NO, customer_code C370): ",
+        nrow(calls) - nrow(calls_filtered))
+
 # ---- aggregate hourly per team ----
-ts_hourly <- calls %>%
+ts_hourly <- calls_filtered %>%
   mutate(
     ds   = floor_date(call_start_time, unit = "hour"),
     team = call_responsible_department_l5
@@ -29,3 +45,4 @@ ts_hourly <- calls %>%
 saveRDS(ts_hourly, out_path)
 
 message("✔ Hourly time series created for all teams (ds, y, team)")
+message("✔ Team NO is now WITHOUT customer_code 370 in y")
