@@ -127,6 +127,27 @@ saveRDS(
   file.path(metrics_rds_dir, "metrics_final_glm.rds")
 )
 
+# Model print
+#NO
+mod_no <- readRDS("models/final_glm_negbin_by_team.rds")[[ "Team NO 1, Travelcare" ]]
+summary(mod_no)
+
+#DK
+mod_dk <- readRDS("models/final_glm_negbin_by_team.rds")[[ "Team DK 1, Travelcare" ]]
+summary(mod_dk)
+
+#FI
+mod_fi <- readRDS("models/final_glm_negbin_by_team.rds")[[ "Team FI 1, Travelcare" ]]
+summary(mod_fi)
+
+#SE 1
+mod_se1 <- readRDS("models/final_glm_negbin_by_team.rds")[[ "Team SE 1, Travelcare" ]]
+summary(mod_se1)
+
+#SE 2
+mod_se2 <- readRDS("models/final_glm_negbin_by_team.rds")[[ "Team SE 2, Travelcare" ]]
+summary(mod_se2)
+
 message("✔ Plotting complete.")
 message("✔ Metrics saved to: ")
 message("  - CSV: output/diagnostics/metrics_final_glm.csv")

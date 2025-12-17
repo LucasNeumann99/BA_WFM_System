@@ -59,8 +59,6 @@ calendar_features <- c(
   "hour",
   "weekday",      # faktor fra trin 06
   "month",
-  "is_weekend",
-  "is_night",
   "Vinterferie",
   "Påskeferie",
   "Sommerferie",
@@ -164,8 +162,6 @@ for (tm in teams) {
           "factor(hour)",
           "weekday",
           "month",
-          "is_weekend",
-          "is_night",
           "Vinterferie",
           "Påskeferie",
           "Sommerferie",

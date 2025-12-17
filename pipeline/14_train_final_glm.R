@@ -34,20 +34,15 @@ df_test  <- df %>% filter(ds >= ymd("2025-01-01"))
 teams <- unique(df$team)
 
 # ------------------------------------------------------------
-# Feature types (NO Holiday_any to avoid multicollinearity)
+# Feature types
 # ------------------------------------------------------------
 factor_vars <- c("hour", "weekday", "month")
 
 numeric_vars <- c(
   "week", "year",
-  "is_weekend", "is_night",
   "Juleferie", "Vinterferie", "Påskeferie",
   "Sommerferie", "Efterårsferie"
 )
-
-# Output containers
-models_out <- list()
-fc_list <- list()
 
 # ------------------------------------------------------------
 # Train per team
@@ -59,40 +54,63 @@ for (tm in teams) {
   tr <- df_train %>% filter(team == tm)
   te <- df_test  %>% filter(team == tm)
   
-  # Clean factor levels
-  tr <- tr %>% mutate(across(all_of(factor_vars), factor)) %>% droplevels()
+  # 1) Clean factor levels + sæt baseline for faktorer
+  tr <- tr %>%
+    mutate(
+      hour    = factor(hour),             # baseline = første level (typisk 0)
+      weekday = factor(weekday, ordered = FALSE),
+      month   = factor(month)
+    ) %>%
+    droplevels()
   
-  te <- te %>% mutate(across(all_of(factor_vars),
-                             ~ factor(.x, levels = levels(tr[[cur_column()]]))))
+  te <- te %>%
+    mutate(
+      hour    = factor(hour,    levels = levels(tr$hour)),
+      weekday = factor(weekday, levels = levels(tr$weekday)),
+      month   = factor(month,   levels = levels(tr$month))
+    )
   
-  tr <- tr %>% mutate(across(all_of(numeric_vars), as.numeric))
-  te <- te %>% mutate(across(all_of(numeric_vars), as.numeric))
+  # 2) Center week/year for pænere intercept
+  week_mean <- mean(tr$week, na.rm = TRUE)
+  year_ref  <- 2024  # vi vil gerne tolke intercept som "omkring år 2024"
+  
+  tr <- tr %>%
+    mutate(
+      week_c = as.numeric(week) - week_mean,
+      year_c = as.numeric(year) - year_ref
+    )
+  
+  te <- te %>%
+    mutate(
+      week_c = as.numeric(week) - week_mean,
+      year_c = as.numeric(year) - year_ref
+    )
+  
+  # øvrige numeriske features som numeric
+  num_vars_other <- c("Juleferie", "Vinterferie", "Påskeferie",
+                      "Sommerferie", "Efterårsferie")
+  
+  tr <- tr %>%
+    mutate(across(all_of(num_vars_other), as.numeric))
+  te <- te %>%
+    mutate(across(all_of(num_vars_other), as.numeric))
   
   # ---------------- Model formula ----------------
-  form <- as.formula(
-    paste(
-      "y ~",
-      paste(
-        c(
-          "hour", "weekday", "month",
-          "week", "year",
-          "is_weekend", "is_night",
-          "Juleferie", "Vinterferie", "Påskeferie",
-          "Sommerferie", "Efterårsferie"
-        ),
-        collapse = " + "
-      )
-    )
-  )
+  form <- y ~
+    hour + weekday + month +
+    week_c + year_c +
+    Juleferie + Vinterferie + Påskeferie +
+    Sommerferie + Efterårsferie
   
   # ---------------- Train model ----------------
   mod_nb <- glm.nb(formula = form, data = tr)
   
   # ---------------- Forecast ----------------
-  te <- te %>% mutate(y_hat = predict(mod_nb, newdata = te, type = "response"))
+  te <- te %>%
+    mutate(y_hat = predict(mod_nb, newdata = te, type = "response"))
   
-  fc_list[[tm]]     <- te
-  models_out[[tm]]  <- mod_nb
+  fc_list[[tm]]    <- te
+  models_out[[tm]] <- mod_nb
 }
 
 # Save
