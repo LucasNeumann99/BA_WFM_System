@@ -127,45 +127,56 @@ message("\nTeam NO – YTD volume pr. år til dag ", max_yday_2025, ":")
 print(no_yearly_team_ytd)
 
 # ------------------------------------------------------------
-# 6) Specifikt fokus: customer_code = 370
+# 6) Specifikt fokus: “Storebrand” (anonymiseret som customer_code = 370)
 # ------------------------------------------------------------
+storebrand_code    <- 370L
+storebrand_pattern <- "Storebrand"   # vi matcher på navn i service_entrance
+
+# Månedlig udvikling for alle service_entrances der indeholder "Storebrand"
 store_monthly_by_year <- no_calls %>%
-  filter(customer_code == storebrand_code) %>%
+  filter(str_detect(service_entrance, storebrand_pattern)) %>%
   mutate(
+    customer_code = storebrand_code,
     year  = year(date),
     month = month(date)
   ) %>%
-  group_by(year, month) %>%
+  group_by(customer_code, year, month) %>%
   summarise(calls = n(), .groups = "drop")
 
-message("\nMånedlig udvikling for customer_code 370 (aggreggeret):")
-print(store_monthly_by_year %>% arrange(year, month))
+# (valgfrit) plot – kun ved interaktiv kørsel
+if (interactive() && nrow(store_monthly_by_year) > 0) {
+  p_store_monthly <- ggplot(
+    store_monthly_by_year %>% filter(year >= 2023),
+    aes(x = factor(month), y = calls, group = year, colour = factor(year))
+  ) +
+    geom_line() +
+    geom_point(size = 2) +
+    labs(
+      title  = "Månedlig udvikling i customer_code 370 (Storebrand, Team NO)",
+      x      = "Måned",
+      y      = "Antal opkald",
+      colour = "År"
+    ) +
+    scale_x_discrete(labels = 1:12) +
+    theme_minimal()
+  
+  print(p_store_monthly)
+}
 
 # ------------------------------------------------------------
-# 7) Gem summary + plots til BA-dokumentation
+# 7) Gem et lille summary til rapport
 # ------------------------------------------------------------
 diag_dir <- here("results", "diagnostics")
-fig_dir  <- here("figures", "diagnostics", "team_no")
-
 dir.create(diag_dir, recursive = TRUE, showWarnings = FALSE)
-dir.create(fig_dir,  recursive = TRUE, showWarnings = FALSE)
-
-# Map service_entrance -> mest hyppige customer_code
-service_code_map <- no_calls %>%
-  group_by(service_entrance, customer_code) %>%
-  summarise(n = n(), .groups = "drop_last") %>%
-  slice_max(n, n = 1, with_ties = FALSE) %>%
-  ungroup() %>%
-  select(service_entrance, customer_code)
 
 summary_out <- candidates_24_25 %>%
-  left_join(service_code_map, by = "service_entrance") %>%
-  select(
-    customer_code,
-    service_entrance,
-    calls_24, calls_25,
-    share_24, share_25,
-    drop_ratio, drop_abs, drop_team_pp
+  mutate(
+    # anonymiser Storebrand i output – men brug IKKE customer_code til at filtrere input
+    customer_code = if_else(
+      str_detect(service_entrance, storebrand_pattern),
+      storebrand_code,
+      NA_integer_
+    )
   )
 
 readr::write_csv(
@@ -173,62 +184,4 @@ readr::write_csv(
   file.path(diag_dir, "team_no_customer_shift_candidates.csv")
 )
 
-message("\n✔ Diagnostics gemt i: results/diagnostics/team_no_customer_shift_candidates.csv")
-
-# Plots – kun med anonymiseret label
-p_store_calls <- ggplot(
-  store_monthly_by_year %>% filter(year >= 2023),
-  aes(x = factor(month), y = calls, group = factor(year), colour = factor(year))
-) +
-  geom_line() +
-  geom_point(size = 2) +
-  labs(
-    title = "Månedlig udvikling i opkald – customer_code 370 (Team NO)",
-    x = "Måned",
-    y = "Antal opkald",
-    colour = "År"
-  ) +
-  scale_x_discrete(labels = 1:12) +
-  theme_minimal()
-
-ggsave(
-  filename = file.path(fig_dir, "customer_370_monthly_calls.png"),
-  plot     = p_store_calls,
-  width    = 9,
-  height   = 5,
-  dpi      = 300
-)
-
-# Team NO totalt pr. måned (for at se andel)
-team_monthly <- no_calls %>%
-  mutate(month = floor_date(date, "month")) %>%
-  count(month, name = "team_calls")
-
-store_monthly <- no_calls %>%
-  filter(customer_code == storebrand_code) %>%
-  mutate(month = floor_date(date, "month")) %>%
-  count(month, name = "calls_370")
-
-store_share_monthly <- store_monthly %>%
-  left_join(team_monthly, by = "month") %>%
-  mutate(share_370 = calls_370 / team_calls)
-
-p_store_share <- ggplot(store_share_monthly, aes(x = month, y = share_370 * 100)) +
-  geom_line() +
-  geom_point() +
-  labs(
-    title = "customer_code 370 – andel af Team NO pr. måned",
-    x = "Måned",
-    y = "Andel af Team NO (%)"
-  ) +
-  theme_minimal()
-
-ggsave(
-  filename = file.path(fig_dir, "customer_370_share_of_team_no.png"),
-  plot     = p_store_share,
-  width    = 9,
-  height   = 5,
-  dpi      = 300
-)
-
-message("✔ Plots gemt i: figures/diagnostics/team_no/")
+message("✔ Diagnostics gemt i: results/diagnostics/team_no_customer_shift_candidates.csv")
