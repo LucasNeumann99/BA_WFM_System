@@ -38,7 +38,8 @@ ts_hourly <- calls_filtered %>%
     ds   = floor_date(call_start_time, unit = "hour"),
     team = call_responsible_department_l5
   ) %>%
-  count(team, ds, name = "y") %>%
+  group_by(team, ds) %>%
+  summarise(y = sum(real_offered_call, na.rm = TRUE), .groups = "drop") %>%
   arrange(team, ds)
 
 # ---- save ----
