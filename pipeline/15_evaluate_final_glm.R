@@ -86,6 +86,8 @@ for (tm in teams) {
   message("---- Plotting: ", tm)
   
   df <- fc %>% filter(team == tm)
+  model_tag <- if ("model_used" %in% names(df)) unique(df$model_used) else "GLM_NegBin"
+  if (length(model_tag) != 1) model_tag <- "GLM_NegBin"
   
   # Save plots
   out_team_dir <- file.path(fig_dir, tm)
@@ -105,7 +107,7 @@ for (tm in teams) {
   
   # Metrics
   m <- compute_metrics(df) %>%
-    mutate(team = tm, model = "GLM_NegBin")
+    mutate(team = tm, model = model_tag)
   
   metrics_all[[tm]] <- m
 }
