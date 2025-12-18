@@ -1,4 +1,5 @@
 # pipeline/02_clean_calls.R
+# Formål: standardiser kolonnenavne og konverter tidsstempler til POSIXct.
 library(tidyverse)
 library(lubridate)
 library(janitor)

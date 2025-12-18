@@ -1,7 +1,7 @@
 # ============================================================
 # 12_train_glm_lags.R
 # ------------------------------------------------------------
-# Formål:
+# Formål: træn GLM (Poisson/NegBin) med lag- og rullende features pr. team; gem test-forecast, metrics og model-objekter.
 # - Træne forbedrede GLM-modeller pr. team
 #   med både kalender- og lagfeatures
 # - Distributioner: Poisson + Negativ Binomial

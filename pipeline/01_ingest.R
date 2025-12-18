@@ -1,4 +1,5 @@
 # pipeline/01_ingest.R
+# Formål: læs rå call-CSV og gem som RDS til videre pipeline-trin.
 library(tidyverse)
 library(here)
 

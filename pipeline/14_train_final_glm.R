@@ -1,8 +1,6 @@
 # ============================================================
-# 14_train_final_glm.R (CLEAN + CORRECT)
-# FINAL Negative Binomial GLM baseline
-# - Train 24h
-# - Save models + forecasts
+# 14_train_final_glm.R
+# Formål: træne endelig NegBin GLM pr. team; brug lag-model for FI/NO/SE1 og baseline uden lag for DK/SE2; gem modeller og forecasts.
 # ============================================================
 
 library(tidyverse)
@@ -58,6 +56,16 @@ numeric_vars <- c(
 lag_vars <- c(
   "lag_1", "lag_24", "lag_48", "lag_168",
   "roll_mean_24", "roll_mean_72", "roll_mean_168"
+)
+
+# ------------------------------------------------------------
+# Teams der skal bruge lag-features (konfigureret efter uplift)
+# ------------------------------------------------------------
+teams_use_lags <- c(
+  "Team DK 1, Travelcare",
+  "Team FI 1, Travelcare",
+  "Team NO 1, Travelcare",
+  "Team SE 1, Travelcare"
 )
 
 # ------------------------------------------------------------

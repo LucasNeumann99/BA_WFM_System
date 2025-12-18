@@ -1,7 +1,7 @@
 # ============================================================
 # 10_train_baseline_models.R
 # ------------------------------------------------------------
-# Formål:
+# Formål: træn baseline GLM (Poisson/NegBin) pr. team uden lag, lav test-forecast og metrics.
 # - Træne simple, forklarbare baseline-modeller (Poisson & NegBin)
 #   pr. team til hourly call volume
 # - Train: 2022-01-01 → 2024-12-31

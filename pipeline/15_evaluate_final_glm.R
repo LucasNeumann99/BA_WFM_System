@@ -1,7 +1,7 @@
 # ============================================================
 # 15_evaluate_final_glm.R
 # ------------------------------------------------------------
-# Evaluates FINAL NegBin GLM baseline
+# Formål: evaluere endelig GLM pr. team (lag eller baseline), gemme plots og metrics til rapport/teknik.
 # - Produces 2 plots per team:
 #     1) Forecast vs actual
 #     2) Residuals over time

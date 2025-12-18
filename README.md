@@ -15,15 +15,23 @@ Denne mappe er **den officielle BA-projektmappe**. `main` er stabil; `glm` bruge
 - 15: evaluerer endelig model, gemmer plots og metrics.
 
 ### Endelig modelvalg (branch `glm`)
-- Lag-model (`GLM_NegBin_lags`): Team FI 1, Team NO 1, Team SE 1.
-- Baseline uden lag (`GLM_NegBin_baseline`): Team DK 1, Team SE 2.
+- Lag-model (`GLM_NegBin_lags`): Team DK 1, Team FI 1, Team NO 1, Team SE 1.
+- Baseline uden lag (`GLM_NegBin_baseline`): Team SE 2.
 - Forecasts: `results/final/glm/fc_final_glm_negbin.rds`
 - Metrics: `output/diagnostics/metrics_final_glm.csv` og `results/final/glm/metrics_final_glm.rds`
 - Plots: `figures/final/glm/<team>/`
 
+### Aktiv GLM-model (main)
+- Default er de endelige GLM NegBin-modeller (mix af lag/baseline) fra ovenstående valg.
+- Aktiv model styres af `models/active_glm_model.txt` (initielt `final_glm_negbin_by_team.rds`). Skift fx til baseline: `echo "baseline_glm_by_team.rds" > models/active_glm_model.txt`.
+- Hjælpefunktioner ligger i `model_functions/model_registry.R`:
+  - `load_active_glm_models()` læser den aktive model-Liste.
+  - `list_available_glm_models()` viser hvad der kan vælges.
+  - `set_active_glm_model("<filnavn>.rds")` sætter/validerer ny aktiv model.
+
 ### Branches
-- `main`: stabil kodebase uden eksperimentelle GLM-outputs.
-- `glm`: GLM-eksperimenter og endelige GLM-valg (lag vs. baseline).
+- `main`: stabil kodebase med aktiv final GLM-modeller (kan udskiftes via `models/active_glm_model.txt`).
+- `glm`: GLM-eksperimenter og endelige GLM-valg (lag vs. baseline) før de lægges på `main`.
 
 ## Mappestruktur
 - data_raw/                → Rå CSV-filer
