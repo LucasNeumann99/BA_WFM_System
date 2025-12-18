@@ -1,8 +1,6 @@
 # ============================================================
-# 14_train_final_glm.R (CLEAN + CORRECT)
-# FINAL Negative Binomial GLM baseline
-# - Train 24h
-# - Save models + forecasts
+# 14_train_final_glm.R
+# Formål: træne endelig NegBin GLM pr. team; brug lag-model for FI/NO/SE1 og baseline uden lag for DK/SE2; gem modeller og forecasts.
 # ============================================================
 
 library(tidyverse)

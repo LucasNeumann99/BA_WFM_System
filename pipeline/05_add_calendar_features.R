@@ -1,4 +1,5 @@
 # pipeline/05_add_calendar_features.R
+# Formål: tilføj kalenderfeatures (helligdage, ferier) via helpers i model_functions/.
 library(tidyverse)
 library(here)
 

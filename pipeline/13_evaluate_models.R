@@ -1,9 +1,7 @@
 # ============================================================
 # 13_evaluate_models.R
 # ------------------------------------------------------------
-# Sammenligner:
-#   - Baseline GLM (Poisson, NegBin)
-#   - GLM + lags (Poisson_lags, NegBin_lags)
+# Formål: sammenligne baseline GLM (Poisson/NegBin) vs. GLM med lags (Poisson/NegBin), beregne uplift/R² og gemme plots/tabeller.
 #
 # Output:
 #   - Forklaringsgrad (Explained R²)

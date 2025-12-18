@@ -1,4 +1,5 @@
 # pipeline/03_aggregate_hourly.R
+# Formål: filtrer kunde C370 for Team NO og aggreger “real_offered_call” pr. team/time.
 library(tidyverse)
 library(lubridate)
 library(here)
