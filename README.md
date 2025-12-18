@@ -15,8 +15,8 @@ Denne mappe er **den officielle BA-projektmappe**. `main` er stabil; `glm` bruge
 - 15: evaluerer endelig model, gemmer plots og metrics.
 
 ### Endelig modelvalg (branch `glm`)
-- Lag-model (`GLM_NegBin_lags`): Team FI 1, Team NO 1, Team SE 1.
-- Baseline uden lag (`GLM_NegBin_baseline`): Team DK 1, Team SE 2.
+- Lag-model (`GLM_NegBin_lags`): Team DK 1, Team FI 1, Team NO 1, Team SE 1.
+- Baseline uden lag (`GLM_NegBin_baseline`): Team SE 2.
 - Forecasts: `results/final/glm/fc_final_glm_negbin.rds`
 - Metrics: `output/diagnostics/metrics_final_glm.csv` og `results/final/glm/metrics_final_glm.rds`
 - Plots: `figures/final/glm/<team>/`

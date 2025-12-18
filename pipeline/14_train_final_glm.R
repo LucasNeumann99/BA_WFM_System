@@ -59,6 +59,16 @@ lag_vars <- c(
 )
 
 # ------------------------------------------------------------
+# Teams der skal bruge lag-features (konfigureret efter uplift)
+# ------------------------------------------------------------
+teams_use_lags <- c(
+  "Team DK 1, Travelcare",
+  "Team FI 1, Travelcare",
+  "Team NO 1, Travelcare",
+  "Team SE 1, Travelcare"
+)
+
+# ------------------------------------------------------------
 # Train per team
 # ------------------------------------------------------------
 for (tm in teams) {
