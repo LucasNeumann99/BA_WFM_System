@@ -90,10 +90,10 @@ r2_lags <- fc_lags %>%
 # ============================================================
 
 compute_mcfadden <- function(model) {
+  # Brug deviance/null.deviance for at undgå re-fit med manglende data i scope
   if (is.null(model)) return(NA_real_)
-  ll_full <- as.numeric(logLik(model))
-  ll_null <- as.numeric(logLik(update(model, . ~ 1)))
-  1 - (ll_full / ll_null)
+  if (is.null(model$null.deviance) || model$null.deviance == 0) return(NA_real_)
+  1 - (model$deviance / model$null.deviance)
 }
 
 # --- Baseline ---
