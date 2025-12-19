@@ -1,0 +1,12 @@
+{
+  "backtest": {
+    "n_folds": 6,
+    "test_window_days": 28,
+    "gap_days": 0
+  },
+  "operational": {
+    "forecast_start": "2026-01-01 00:00:00",
+    "forecast_end":   "2026-12-31 23:00:00"
+  },
+  "timezone": "Europe/Copenhagen"
+}

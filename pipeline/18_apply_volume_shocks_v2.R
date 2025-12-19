@@ -1,0 +1,51 @@
+# ============================================================
+# 18_apply_volume_shocks_v2.R
+# ------------------------------------------------------------
+# Formål: anvend volumen-shocks/breakpoints på operationelle forecasts.
+# Output: results/v2/scenarios/fc_operational_scenario_v2.rds med y_hat (justeret).
+# ============================================================
+
+library(tidyverse)
+library(lubridate)
+library(here)
+
+dir.create(here("results", "v2", "scenarios"), recursive = TRUE, showWarnings = FALSE)
+
+fc_raw_path   <- here("results", "v2", "operational", "fc_operational_raw_v2.rds")
+shocks_path   <- here("config", "volume_shocks.csv")
+fc_out_path   <- here("results", "v2", "scenarios", "fc_operational_scenario_v2.rds")
+
+fc <- readRDS(fc_raw_path)
+shocks <- read_csv(shocks_path, show_col_types = FALSE) %>%
+  mutate(
+    start_date = as_datetime(start_date),
+    end_date   = if_else(is.na(end_date) | end_date == "", NA, as_datetime(end_date)),
+    priority   = if_else(is.na(priority), 0L, priority)
+  ) %>%
+  arrange(desc(priority))
+
+fc <- fc %>%
+  mutate(
+    y_hat = y_hat_raw,
+    scenario_label = NA_character_,
+    shock_multiplier_applied = 1
+  )
+
+apply_shock <- function(fc_df, shock_row) {
+  idx <- fc_df$team == shock_row$team &
+    fc_df$ds >= shock_row$start_date &
+    (is.na(shock_row$end_date) | fc_df$ds < shock_row$end_date) &
+    is.na(fc_df$scenario_label)
+  
+  fc_df$scenario_label[idx] <- shock_row$label
+  fc_df$shock_multiplier_applied[idx] <- shock_row$multiplier
+  fc_df$y_hat[idx] <- fc_df$y_hat_raw[idx] * shock_row$multiplier
+  fc_df
+}
+
+for (i in seq_len(nrow(shocks))) {
+  fc <- apply_shock(fc, shocks[i, ])
+}
+
+saveRDS(fc, fc_out_path)
+message("✔ Scenarier anvendt. Gemt til: ", fc_out_path)

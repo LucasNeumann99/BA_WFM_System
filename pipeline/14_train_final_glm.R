@@ -59,6 +59,15 @@ lag_vars <- c(
 )
 
 # ------------------------------------------------------------
+# Fremtidige volumen-justeringer (scenarier)
+# ------------------------------------------------------------
+# Format: team, start_date, multiplier (fx 0.7 = -30 %)
+volume_shocks <- tribble(
+  ~team,                    ~start_date,     ~multiplier,
+  "Team DK 1, Travelcare",  ymd("2026-05-01"), 0.7
+)
+
+# ------------------------------------------------------------
 # Teams der skal bruge lag-features (konfigureret efter uplift)
 # ------------------------------------------------------------
 teams_use_lags <- c(
@@ -162,6 +171,19 @@ for (tm in teams) {
       y_hat  = predict(mod_nb, newdata = te, type = "response"),
       model_used = if (use_lags) "GLM_NegBin_lags" else "GLM_NegBin_baseline"
     )
+  
+  # ---------------- Scenario: volumen-chok ----------------
+  shock <- volume_shocks %>% filter(team == tm)
+  if (nrow(shock) == 1) {
+    te <- te %>%
+      mutate(
+        adj_factor = if_else(ds >= shock$start_date[1], shock$multiplier[1], 1),
+        y_hat      = y_hat * adj_factor,
+        scenario   = paste0("vol_chok_from_", shock$start_date[1], "_x", shock$multiplier[1])
+      )
+  } else {
+    te <- te %>% mutate(scenario = NA_character_)
+  }
   
   fc_list[[tm]]    <- te
   models_out[[tm]] <- mod_nb
