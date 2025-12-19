@@ -10,6 +10,12 @@ library(lubridate)
 library(here)
 library(jsonlite)
 
+# Standardparametre til Erlang C (kan overskrives hvis de findes i data)
+AHT_SEC       <- 316      # gennemsnitlig AHT i sek
+TARGET_SL     <- 0.80     # mål for service level (fx 80 %)
+THRESHOLD_SEC <- 25       # SLA-grænse i sek
+SHRINKAGE     <- 0.35     # forventet shrinkage (fx 35 %)
+
 cfg <- fromJSON(here("config", "forecast_v2.json"))
 tz_info <- cfg$timezone %||% "UTC"
 op_cfg  <- cfg$operational
@@ -39,7 +45,13 @@ fc <- fc %>%
   ensure_col("threshold_sec", NA_real_) %>%
   ensure_col("shrinkage", NA_real_) %>%
   mutate(
-    calls = if ("volume" %in% names(.)) volume else y_hat
+    calls = if ("volume" %in% names(.)) volume else y_hat,
+    calls = if_else(is.finite(calls), calls, 0),
+    calls = replace_na(calls, 0),
+    aht_sec       = coalesce(aht_sec, AHT_SEC),
+    target_sl     = coalesce(target_sl, TARGET_SL),
+    threshold_sec = coalesce(threshold_sec, THRESHOLD_SEC),
+    shrinkage     = coalesce(shrinkage, SHRINKAGE)
   )
 
 erlang_input <- fc %>%
