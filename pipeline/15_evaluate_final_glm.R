@@ -136,10 +136,26 @@ saveRDS(
 models <- readRDS(here("models", "final_glm_negbin_by_team.rds"))
 model_summary <- imap_dfr(models, ~ broom::tidy(.x) %>% mutate(team = .y))
 
+# Gem samlet fil (beholder kompatibilitet) og én fil pr. team for nem deling
 readr::write_csv(
   model_summary,
   file.path(metrics_csv_dir, "model_summary_final_glm.csv")
 )
+
+slugify <- function(x) {
+  x %>%
+    str_to_lower() %>%
+    str_replace_all("[^a-z0-9]+", "_") %>%
+    str_replace_all("^_|_$", "")
+}
+
+walk(unique(model_summary$team), function(tm) {
+  out_path <- file.path(
+    metrics_csv_dir,
+    paste0("model_summary_final_glm_", slugify(tm), ".csv")
+  )
+  readr::write_csv(filter(model_summary, team == tm), out_path)
+})
 
 # Model print
 #NO
