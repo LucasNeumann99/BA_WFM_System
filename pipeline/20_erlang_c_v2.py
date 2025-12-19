@@ -14,15 +14,44 @@ from pathlib import Path
 
 import pandas as pd
 
+class _FallbackErlangC:
+    """
+    Simpel Erlang C fallback hvis pyworkforce ikke er installeret.
+    Bruger standardformel for service level:
+      P(wait>0) = ErlangC probability
+      P(wait<=t) = 1 - P(wait>0) * exp(-(n - a) * mu * t)
+    Hvor a = traffic (erlangs), mu = service_rate.
+    """
+
+    def __init__(self, arrival_rate, service_rate, target_wait_time):
+        self.arrival_rate = arrival_rate
+        self.service_rate = service_rate
+        self.target_wait_time = target_wait_time
+
+    def _erlang_c_prob(self, n_agents):
+        a = self.arrival_rate / self.service_rate  # erlangs
+        if n_agents <= a:
+            return 1.0
+        numerator = (a ** n_agents) / (math.factorial(n_agents) * (n_agents - a))
+        denom = sum((a ** k) / math.factorial(k) for k in range(n_agents)) + numerator
+        return numerator / denom
+
+    def service_level(self, n_agents):
+        a = self.arrival_rate / self.service_rate
+        p_wait = self._erlang_c_prob(n_agents)
+        pw_t = p_wait * math.exp(-(n_agents - a) * self.service_rate * self.target_wait_time)
+        return 1 - pw_t
+
+
 try:
-    # Vælg et velkendt lib; pyworkforce er aktivt vedligeholdt og dokumenteret.
     from pyworkforce.queuing import ErlangC
-except ImportError as exc:  # pragma: no cover - informativ fejl
+    ErlangCImpl = ErlangC
+except ImportError:
     sys.stderr.write(
-        "pyworkforce mangler. Installer via:\n"
-        "  pip install pyworkforce\n"
+        "pyworkforce mangler; bruger fallback Erlang C-implementation.\n"
+        "Installer evt.: pip install pyworkforce\n"
     )
-    raise exc
+    ErlangCImpl = _FallbackErlangC
 
 
 INPUT_CSV = Path("output/v2/erlang/erlang_input_v2.csv")
@@ -53,7 +82,7 @@ def compute_staffing(row):
     service_rate = 1.0 / aht_sec
     traffic = calls * aht_sec / 3600.0
 
-    erlang = ErlangC(
+    erlang = ErlangCImpl(
         arrival_rate=arrival_rate,
         service_rate=service_rate,
         target_wait_time=threshold_sec,
