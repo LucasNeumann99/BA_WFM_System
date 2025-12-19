@@ -17,8 +17,8 @@ Denne mappe er **den officielle BA-projektmappe**. `main` er stabil; `glm` bruge
 ### Endelig modelvalg (branch `glm`)
 - Lag-model (`GLM_NegBin_lags`): Team FI 1, Team NO 1, Team SE 1.
 - Baseline uden lag (`GLM_NegBin_baseline`): Team DK 1, Team SE 2.
-- Forecasts: `results/final/glm/fc_final_glm_negbin.rds`
-- Metrics: `output/diagnostics/metrics_final_glm.csv` og `results/final/glm/metrics_final_glm.rds`
+- Forecasts: `<results_base>/final/glm/fc_final_glm_negbin.rds`
+- Metrics: `<output_base>/diagnostics/metrics_final_glm.csv` og `<results_base>/final/glm/metrics_final_glm.rds`
 - Plots: `figures/final/glm/<team>/`
 
 ### Aktiv GLM-model (main)
@@ -33,6 +33,12 @@ Denne mappe er **den officielle BA-projektmappe**. `main` er stabil; `glm` bruge
 - `main`: stabil kodebase med aktiv final GLM-modeller (kan udskiftes via `models/active_glm_model.txt`).
 - `glm`: GLM-eksperimenter og endelige GLM-valg (lag vs. baseline) før de lægges på `main`.
 
+## Output paths
+- Output og results gemmes uden for repoet.
+- Justeres i `config/paths.json`:
+  - `output_base` (fx `../../BA_WFM_Output/output`)
+  - `results_base` (fx `../../BA_WFM_Output/results`)
+
 ## Mappestruktur
 - data_raw/                → Rå CSV-filer
 - data_processed/          → RDS-filer klar til modeller
@@ -40,9 +46,9 @@ Denne mappe er **den officielle BA-projektmappe**. `main` er stabil; `glm` bruge
 - model_functions/         → FE, modelling, LP, Erlang
 - pipeline/                → Scripts der kører workflowet
 - shiny_app/               → Shiny-dashboard
-- output/diagnostics/      → Diagnoseplots og metrics
-- output/forecasts/        → Forecasts til Erlang
-- output/staffing/         → Optimerede bemandingsplaner
+- <output_base>/diagnostics/ → Diagnoseplots og metrics
+- <output_base>/forecasts/   → Forecasts til Erlang
+- <output_base>/staffing/    → Optimerede bemandingsplaner
 
 ## Kørsel (lokalt)
 - Kør hele GLM-workflowet fra ren start:  

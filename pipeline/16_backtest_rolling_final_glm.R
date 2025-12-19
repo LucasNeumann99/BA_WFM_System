@@ -11,6 +11,8 @@ library(here)
 library(MASS)
 library(jsonlite)
 
+source(here("model_functions", "paths.R"))
+
 # ------------------------------------------------------------
 # Paths og config
 # ------------------------------------------------------------
@@ -20,11 +22,14 @@ cfg        <- fromJSON(cfg_path)
 backtest_cfg <- cfg$backtest
 tz_info      <- cfg$timezone %||% "UTC"
 
-dir.create(here("results", "v2", "backtests"), recursive = TRUE, showWarnings = FALSE)
-dir.create(here("output",  "v2", "diagnostics"), recursive = TRUE, showWarnings = FALSE)
+paths <- get_pipeline_paths()
+backtest_dir <- file.path(paths$results, "v2", "backtests")
+diag_dir <- file.path(paths$output, "v2", "diagnostics")
+dir.create(backtest_dir, recursive = TRUE, showWarnings = FALSE)
+dir.create(diag_dir, recursive = TRUE, showWarnings = FALSE)
 
-fc_out_path     <- here("results", "v2", "backtests", "fc_backtest_rolling.rds")
-metrics_out_path<- here("output",  "v2", "diagnostics", "metrics_backtest_rolling.csv")
+fc_out_path     <- file.path(backtest_dir, "fc_backtest_rolling.rds")
+metrics_out_path<- file.path(diag_dir, "metrics_backtest_rolling.csv")
 
 # ------------------------------------------------------------
 # Data og teams

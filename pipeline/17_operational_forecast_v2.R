@@ -3,7 +3,7 @@
 # ------------------------------------------------------------
 # Formål: lav operationelle forecasts (rå model-output) for angivet horisont.
 # Lag-teams køres rekursivt time-for-time; baseline-teams uses direkte feature-prediktion.
-# Output: results/v2/operational/fc_operational_raw_v2.rds (y_hat_raw, model_used, is_recursive).
+# Output: <results_base>/v2/operational/fc_operational_raw_v2.rds (y_hat_raw, model_used, is_recursive).
 # ============================================================
 
 library(tidyverse)
@@ -12,6 +12,8 @@ library(here)
 library(MASS)
 library(jsonlite)
 
+source(here("model_functions", "paths.R"))
+
 cfg <- fromJSON(here("config", "forecast_v2.json"))
 tz_info <- cfg$timezone %||% "UTC"
 op_cfg  <- cfg$operational
@@ -19,8 +21,10 @@ op_cfg  <- cfg$operational
 forecast_start <- ymd_hms(op_cfg$forecast_start, tz = tz_info)
 forecast_end   <- ymd_hms(op_cfg$forecast_end,   tz = tz_info)
 
-dir.create(here("results", "v2", "operational"), recursive = TRUE, showWarnings = FALSE)
-out_path <- here("results", "v2", "operational", "fc_operational_raw_v2.rds")
+paths <- get_pipeline_paths()
+op_dir <- file.path(paths$results, "v2", "operational")
+dir.create(op_dir, recursive = TRUE, showWarnings = FALSE)
+out_path <- file.path(op_dir, "fc_operational_raw_v2.rds")
 
 # ------------------------------------------------------------
 # Data

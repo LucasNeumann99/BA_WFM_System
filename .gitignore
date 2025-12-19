@@ -9,6 +9,8 @@ data_processed/
 
 # Output & artefakter
 plots/
+output/
+results/
 
 # Modeller
 models/*.rds

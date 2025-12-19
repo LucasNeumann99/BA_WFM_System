@@ -2,8 +2,8 @@
 # 21_optimize_shifts_v2.R
 # ------------------------------------------------------------
 # Formål: Lav LP-baseret vagtplanlægning ud fra scenarie-justeret Erlang-output (v2).
-# Input:  output/v2/erlang/erlang_output_v2.csv
-# Output: output/v2/staffing/shift_plan_optimized_v2.csv og hourly_coverage_vs_required_v2.csv
+# Input:  <output_base>/v2/erlang/erlang_output_v2.csv
+# Output: <output_base>/v2/staffing/shift_plan_optimized_v2.csv og hourly_coverage_vs_required_v2.csv
 # Kræver: tidyverse, lubridate, lpSolve
 # ============================================================
 
@@ -12,11 +12,14 @@ library(lubridate)
 library(lpSolve)
 library(here)
 
+source(here("model_functions", "paths.R"))
+
 # ------------------------------------------------------------
 # Paths
 # ------------------------------------------------------------
-in_path  <- here("output", "v2", "erlang", "erlang_output_v2.csv")
-out_dir  <- here("output", "v2", "staffing")
+paths <- get_pipeline_paths()
+in_path  <- file.path(paths$output, "v2", "erlang", "erlang_output_v2.csv")
+out_dir  <- file.path(paths$output, "v2", "staffing")
 out_plan <- file.path(out_dir, "shift_plan_optimized_v2.csv")
 out_cov  <- file.path(out_dir, "hourly_coverage_vs_required_v2.csv")
 dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)

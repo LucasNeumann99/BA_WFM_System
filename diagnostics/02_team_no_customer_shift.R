@@ -8,13 +8,15 @@
 #
 # Output:
 # - Konsol-print af kandidater
-# - CSV: results/diagnostics/team_no_customer_shift_candidates.csv
+# - CSV: <results_base>/diagnostics/team_no_customer_shift_candidates.csv
 # - Plots: figures/diagnostics/team_no/*.png
 # ============================================================
 
 library(tidyverse)
 library(lubridate)
 library(here)
+
+source(here("model_functions", "paths.R"))
 
 # ------------------------------------------------------------
 # 1) Læs data og filtrér til Team NO
@@ -166,7 +168,8 @@ if (interactive() && nrow(store_monthly_by_year) > 0) {
 # ------------------------------------------------------------
 # 7) Gem et lille summary til rapport
 # ------------------------------------------------------------
-diag_dir <- here("results", "diagnostics")
+paths <- get_pipeline_paths()
+diag_dir <- file.path(paths$results, "diagnostics")
 dir.create(diag_dir, recursive = TRUE, showWarnings = FALSE)
 
 summary_out <- candidates_24_25 %>%
@@ -184,4 +187,7 @@ readr::write_csv(
   file.path(diag_dir, "team_no_customer_shift_candidates.csv")
 )
 
-message("✔ Diagnostics gemt i: results/diagnostics/team_no_customer_shift_candidates.csv")
+message(
+  "✔ Diagnostics gemt i: ",
+  file.path(diag_dir, "team_no_customer_shift_candidates.csv")
+)

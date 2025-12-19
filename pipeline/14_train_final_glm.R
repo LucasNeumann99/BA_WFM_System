@@ -10,6 +10,8 @@ library(lubridate)
 library(here)
 library(MASS)
 
+source(here("model_functions", "paths.R"))
+
 message("Training FINAL NegBin GLM baseline (24h).")
 
 # ------------------------------------------------------------
@@ -18,9 +20,10 @@ message("Training FINAL NegBin GLM baseline (24h).")
 ts_baseline_path <- here("data_processed", "ts_hourly_all_teams_struct_adj.rds")
 ts_lags_path     <- here("data_processed", "ts_hourly_all_teams_lags.rds")
 out_model        <- here("models", "final_glm_negbin_by_team.rds")
-out_fc           <- here("results", "final", "glm", "fc_final_glm_negbin.rds")
+paths <- get_pipeline_paths()
+out_fc           <- file.path(paths$results, "final", "glm", "fc_final_glm_negbin.rds")
 
-dir.create(here("results", "final", "glm"), recursive = TRUE, showWarnings = FALSE)
+dir.create(file.path(paths$results, "final", "glm"), recursive = TRUE, showWarnings = FALSE)
 
 # ------------------------------------------------------------
 # Load data

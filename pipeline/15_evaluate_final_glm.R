@@ -6,8 +6,8 @@
 #     1) Forecast vs actual
 #     2) Residuals over time
 # - Saves metrics as:
-#     - CSV (til BA/rapport): output/diagnostics/metrics_final_glm.csv
-#     - RDS (til modeller/teknik): results/final/glm/metrics_final_glm.rds
+#     - CSV (til BA/rapport): <output_base>/diagnostics/metrics_final_glm.csv
+#     - RDS (til modeller/teknik): <results_base>/final/glm/metrics_final_glm.rds
 # ============================================================
 
 library(tidyverse)
@@ -15,10 +15,13 @@ library(lubridate)
 library(here)
 library(broom)
 
+source(here("model_functions", "paths.R"))
+
 # ------------------------------------------------------------
 # Load forecasts
 # ------------------------------------------------------------
-fc_path <- here("results", "final", "glm", "fc_final_glm_negbin.rds")
+paths <- get_pipeline_paths()
+fc_path <- file.path(paths$results, "final", "glm", "fc_final_glm_negbin.rds")
 fc <- readRDS(fc_path)
 
 teams <- unique(fc$team)
@@ -26,8 +29,8 @@ teams <- unique(fc$team)
 # ------------------------------------------------------------
 # Directory setup
 # ------------------------------------------------------------
-metrics_csv_dir  <- here("output", "diagnostics")   # til BA / rapport
-metrics_rds_dir  <- here("results", "final", "glm") # teknisk lagring
+metrics_csv_dir  <- file.path(paths$output, "diagnostics")   # til BA / rapport
+metrics_rds_dir  <- file.path(paths$results, "final", "glm") # teknisk lagring
 fig_dir          <- here("figures", "final", "glm")
 
 dir.create(metrics_csv_dir, recursive = TRUE, showWarnings = FALSE)
@@ -180,6 +183,6 @@ summary(mod_se2)
 
 message("✔ Plotting complete.")
 message("✔ Metrics saved to: ")
-message("  - CSV: output/diagnostics/metrics_final_glm.csv")
-message("  - RDS: results/final/glm/metrics_final_glm.rds")
+message("  - CSV: ", file.path(metrics_csv_dir, "metrics_final_glm.csv"))
+message("  - RDS: ", file.path(metrics_rds_dir, "metrics_final_glm.rds"))
 print(metrics_final)

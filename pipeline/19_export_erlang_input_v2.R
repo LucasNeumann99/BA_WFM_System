@@ -2,13 +2,15 @@
 # 19_export_erlang_input_v2.R
 # ------------------------------------------------------------
 # Formål: eksportér volumen til Erlang C fra scenarie-justerede forecasts.
-# Output: output/v2/erlang/erlang_input_v2.csv med team, ds, volume (= y_hat).
+# Output: <output_base>/v2/erlang/erlang_input_v2.csv med team, ds, volume (= y_hat).
 # ============================================================
 
 library(tidyverse)
 library(lubridate)
 library(here)
 library(jsonlite)
+
+source(here("model_functions", "paths.R"))
 
 # Standardparametre til Erlang C (kan overskrives hvis de findes i data)
 AHT_SEC       <- 316      # gennemsnitlig AHT i sek
@@ -23,10 +25,12 @@ op_cfg  <- cfg$operational
 forecast_start <- ymd_hms(op_cfg$forecast_start, tz = tz_info)
 forecast_end   <- ymd_hms(op_cfg$forecast_end,   tz = tz_info)
 
-dir.create(here("output", "v2", "erlang"), recursive = TRUE, showWarnings = FALSE)
+paths <- get_pipeline_paths()
+erlang_dir <- file.path(paths$output, "v2", "erlang")
+dir.create(erlang_dir, recursive = TRUE, showWarnings = FALSE)
 
-fc_path <- here("results", "v2", "scenarios", "fc_operational_scenario_v2.rds")
-out_csv <- here("output", "v2", "erlang", "erlang_input_v2.csv")
+fc_path <- file.path(paths$results, "v2", "scenarios", "fc_operational_scenario_v2.rds")
+out_csv <- file.path(erlang_dir, "erlang_input_v2.csv")
 
 fc <- readRDS(fc_path) %>%
   filter(ds >= forecast_start, ds <= forecast_end)

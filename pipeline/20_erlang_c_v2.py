@@ -5,20 +5,36 @@
 # Formål: Beregn bemandingsbehov med en ren Python Erlang C-implementering.
 # Ingen afhængighed til pyworkforce. Numerisk stabilitet via lgamma + log-sum-exp
 # i stedet for factorial, så vi undgår overflow for store n.
-# Input:  output/v2/erlang/erlang_input_v2.csv
-# Output: output/v2/erlang/erlang_output_v2.csv
+# Input:  <output_base>/v2/erlang/erlang_input_v2.csv
+# Output: <output_base>/v2/erlang/erlang_output_v2.csv
 # Køres med: python pipeline/20_erlang_c_v2.py
 # ============================================================
 
+import json
 import math
 import sys
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 
-INPUT_CSV = Path("output/v2/erlang/erlang_input_v2.csv")
-OUTPUT_CSV = Path("output/v2/erlang/erlang_output_v2.csv")
+ROOT_DIR = Path(__file__).resolve().parents[1]
+
+
+def _load_paths():
+    cfg_path = ROOT_DIR / "config" / "paths.json"
+    output_base = "output"
+    results_base = "results"
+    if cfg_path.exists():
+        with cfg_path.open(encoding="utf-8") as handle:
+            cfg = json.load(handle)
+        output_base = cfg.get("output_base", output_base)
+        results_base = cfg.get("results_base", results_base)
+    return (ROOT_DIR / output_base).resolve(), (ROOT_DIR / results_base).resolve()
+
+
+OUTPUT_BASE, RESULTS_BASE = _load_paths()
+INPUT_CSV = OUTPUT_BASE / "v2" / "erlang" / "erlang_input_v2.csv"
+OUTPUT_CSV = OUTPUT_BASE / "v2" / "erlang" / "erlang_output_v2.csv"
 INTERVAL_SECONDS = 3600  # antager 1 times intervaller
 MAX_AGENTS = 200
 

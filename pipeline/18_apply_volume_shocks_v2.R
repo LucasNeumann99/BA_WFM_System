@@ -2,18 +2,22 @@
 # 18_apply_volume_shocks_v2.R
 # ------------------------------------------------------------
 # Formål: anvend volumen-shocks/breakpoints på operationelle forecasts.
-# Output: results/v2/scenarios/fc_operational_scenario_v2.rds med y_hat (justeret).
+# Output: <results_base>/v2/scenarios/fc_operational_scenario_v2.rds med y_hat (justeret).
 # ============================================================
 
 library(tidyverse)
 library(lubridate)
 library(here)
 
-dir.create(here("results", "v2", "scenarios"), recursive = TRUE, showWarnings = FALSE)
+source(here("model_functions", "paths.R"))
 
-fc_raw_path   <- here("results", "v2", "operational", "fc_operational_raw_v2.rds")
+paths <- get_pipeline_paths()
+scenarios_dir <- file.path(paths$results, "v2", "scenarios")
+dir.create(scenarios_dir, recursive = TRUE, showWarnings = FALSE)
+
+fc_raw_path   <- file.path(paths$results, "v2", "operational", "fc_operational_raw_v2.rds")
 shocks_path   <- here("config", "volume_shocks.csv")
-fc_out_path   <- here("results", "v2", "scenarios", "fc_operational_scenario_v2.rds")
+fc_out_path   <- file.path(scenarios_dir, "fc_operational_scenario_v2.rds")
 
 fc <- readRDS(fc_raw_path)
 shocks <- read_csv(shocks_path, show_col_types = FALSE) %>%
