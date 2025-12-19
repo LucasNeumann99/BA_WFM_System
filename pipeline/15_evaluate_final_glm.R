@@ -13,6 +13,7 @@
 library(tidyverse)
 library(lubridate)
 library(here)
+library(broom)
 
 # ------------------------------------------------------------
 # Load forecasts
@@ -127,6 +128,17 @@ readr::write_csv(
 saveRDS(
   metrics_final,
   file.path(metrics_rds_dir, "metrics_final_glm.rds")
+)
+
+# ------------------------------------------------------------
+# Model summary (coefficients) til CSV
+# ------------------------------------------------------------
+models <- readRDS(here("models", "final_glm_negbin_by_team.rds"))
+model_summary <- imap_dfr(models, ~ broom::tidy(.x) %>% mutate(team = .y))
+
+readr::write_csv(
+  model_summary,
+  file.path(metrics_csv_dir, "model_summary_final_glm.csv")
 )
 
 # Model print

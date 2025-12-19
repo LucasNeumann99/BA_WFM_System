@@ -50,7 +50,7 @@ fc_list    <- list()
 factor_vars <- c("hour", "weekday", "month")
 
 numeric_vars <- c(
-  "week", "year",
+  "year",
   "Juleferie", "Vinterferie", "Påskeferie",
   "Sommerferie", "Efterårsferie"
 )
@@ -103,19 +103,16 @@ for (tm in teams) {
       month   = factor(month,   levels = levels(tr$month))
     )
   
-  # 2) Center week/year for pænere intercept
-  week_mean <- mean(tr$week, na.rm = TRUE)
+  # 2) Center year for pænere intercept (week dropped: non-significant, absorbed by month/year/lags)
   year_ref  <- 2024  # vi vil gerne tolke intercept som "omkring år 2024"
   
   tr <- tr %>%
     mutate(
-      week_c = as.numeric(week) - week_mean,
       year_c = as.numeric(year) - year_ref
     )
   
   te <- te %>%
     mutate(
-      week_c = as.numeric(week) - week_mean,
       year_c = as.numeric(year) - year_ref
     )
   
@@ -132,7 +129,7 @@ for (tm in teams) {
   if (use_lags) {
     form <- y ~
       hour + weekday + month +
-      week_c + year_c +
+      year_c +
       Juleferie + Vinterferie + Påskeferie +
       Sommerferie + Efterårsferie +
       lag_1 + lag_24 + lag_48 + lag_168 +
@@ -140,7 +137,7 @@ for (tm in teams) {
   } else {
     form <- y ~
       hour + weekday + month +
-      week_c + year_c +
+      year_c +
       Juleferie + Vinterferie + Påskeferie +
       Sommerferie + Efterårsferie
   }

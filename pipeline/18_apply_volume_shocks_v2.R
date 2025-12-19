@@ -24,6 +24,15 @@ shocks <- read_csv(shocks_path, show_col_types = FALSE) %>%
   ) %>%
   arrange(desc(priority))
 
+# Defensive checks: fail fast with clear message if input is empty/mis-specified
+if (nrow(fc) == 0 || ncol(fc) == 0) {
+  stop("Operational forecast is empty (", fc_raw_path, "). Kør 17_operational_forecast_v2.R med gyldigt forecast-vindue i config/forecast_v2.json.")
+}
+
+if (!"y_hat_raw" %in% names(fc)) {
+  stop("Kolonnen 'y_hat_raw' mangler i ", fc_raw_path, ". Tjek 17_operational_forecast_v2.R og upstream data.")
+}
+
 fc <- fc %>%
   mutate(
     y_hat = y_hat_raw,
