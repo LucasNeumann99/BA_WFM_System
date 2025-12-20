@@ -60,7 +60,8 @@ Denne mappe er **den officielle BA-projektmappe**. `main` er stabil; `glm` bruge
 
 ## Kørsel (lokalt)
 - Kør hele GLM-workflowet fra ren start:  
-  # 01–09: data & features
+
+# 01–09: data & features
 Rscript pipeline/01_*.R
 Rscript pipeline/02_*.R
 Rscript pipeline/03_*.R
