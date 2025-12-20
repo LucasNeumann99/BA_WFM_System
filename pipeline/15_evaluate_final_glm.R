@@ -29,16 +29,16 @@ teams <- unique(fc$team)
 # ------------------------------------------------------------
 # Directory setup
 # ------------------------------------------------------------
-metrics_csv_dir  <- file.path(paths$output, "diagnostics")   # til BA / rapport
+metrics_base_dir <- file.path(paths$output, "baseline_glm")
 metrics_rds_dir  <- file.path(paths$results, "final", "glm") # teknisk lagring
 fig_dir          <- here("figures", "final", "glm")
 
-dir.create(metrics_csv_dir, recursive = TRUE, showWarnings = FALSE)
+dir.create(metrics_base_dir, recursive = TRUE, showWarnings = FALSE)
 dir.create(metrics_rds_dir, recursive = TRUE, showWarnings = FALSE)
 dir.create(fig_dir,         recursive = TRUE, showWarnings = FALSE)
 
 # ------------------------------------------------------------
-# Metric functions (24h – ingen 07–22 filter)
+# Metric functions 
 # ------------------------------------------------------------
 compute_metrics <- function(df) {
   df %>%
@@ -97,6 +97,9 @@ for (tm in teams) {
   out_team_dir <- file.path(fig_dir, tm)
   dir.create(out_team_dir, recursive = TRUE, showWarnings = FALSE)
   
+  diag_dir <- file.path(metrics_base_dir, tm, "diagnostics")
+  dir.create(diag_dir, recursive = TRUE, showWarnings = FALSE)
+  
   ggsave(
     file.path(out_team_dir, "forecast_vs_actual.png"),
     plot = plot_forecast_vs_actual(df, tm),
@@ -113,6 +116,11 @@ for (tm in teams) {
   m <- compute_metrics(df) %>%
     mutate(team = tm, model = model_tag)
   
+  readr::write_csv(
+    m,
+    file.path(diag_dir, "metrics_final_glm.csv")
+  )
+  
   metrics_all[[tm]] <- m
 }
 
@@ -120,12 +128,6 @@ for (tm in teams) {
 # Save metrics (CSV = BA / rapport, RDS = teknisk)
 # ------------------------------------------------------------
 metrics_final <- bind_rows(metrics_all)
-
-# CSV til rapport
-readr::write_csv(
-  metrics_final,
-  file.path(metrics_csv_dir, "metrics_final_glm.csv")
-)
 
 # RDS til intern brug
 saveRDS(
@@ -139,12 +141,6 @@ saveRDS(
 models <- readRDS(here("models", "final_glm_negbin_by_team.rds"))
 model_summary <- imap_dfr(models, ~ broom::tidy(.x) %>% mutate(team = .y))
 
-# Gem samlet fil (beholder kompatibilitet) og én fil pr. team for nem deling
-readr::write_csv(
-  model_summary,
-  file.path(metrics_csv_dir, "model_summary_final_glm.csv")
-)
-
 slugify <- function(x) {
   x %>%
     str_to_lower() %>%
@@ -154,8 +150,10 @@ slugify <- function(x) {
 
 walk(unique(model_summary$team), function(tm) {
   out_path <- file.path(
-    metrics_csv_dir,
-    paste0("model_summary_final_glm_", slugify(tm), ".csv")
+    metrics_base_dir,
+    tm,
+    "diagnostics",
+    "model_summary_final_glm.csv"
   )
   readr::write_csv(filter(model_summary, team == tm), out_path)
 })
@@ -183,6 +181,5 @@ summary(mod_se2)
 
 message("✔ Plotting complete.")
 message("✔ Metrics saved to: ")
-message("  - CSV: ", file.path(metrics_csv_dir, "metrics_final_glm.csv"))
 message("  - RDS: ", file.path(metrics_rds_dir, "metrics_final_glm.rds"))
 print(metrics_final)

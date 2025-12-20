@@ -18,11 +18,8 @@ source(here("model_functions", "paths.R"))
 # Paths
 # ------------------------------------------------------------
 paths <- get_pipeline_paths()
-in_path  <- file.path(paths$output, "v2", "erlang", "erlang_output_v2.csv")
-out_dir  <- file.path(paths$output, "v2", "staffing")
-out_plan <- file.path(out_dir, "shift_plan_optimized_v2.csv")
-out_cov  <- file.path(out_dir, "hourly_coverage_vs_required_v2.csv")
-dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+base_out_dir <- file.path(paths$output, "baseline_glm")
+dir.create(base_out_dir, recursive = TRUE, showWarnings = FALSE)
 
 # ------------------------------------------------------------
 # Helpers
@@ -77,7 +74,7 @@ build_lp_matrix <- function(staffing_df, shift_catalog) {
   
   coverage <- time_slots %>%
     select(staff_date, hour, row_id) %>%
-    inner_join(shift_catalog, by = "staff_date") %>%
+    inner_join(shift_catalog, by = "staff_date", relationship = "many-to-many") %>%
     mutate(covers = if_else(hour >= start_hour & hour < end_hour, 1L, 0L)) %>%
     filter(covers == 1L)
   
@@ -99,6 +96,7 @@ build_lp_matrix <- function(staffing_df, shift_catalog) {
 }
 
 solve_shift_lp <- function(staffing_df,
+                           team_name = NULL,
                            shift_starts = 7:15,
                            shift_length = 8) {
   
@@ -142,10 +140,16 @@ solve_shift_lp <- function(staffing_df,
     filter(agents > 0) %>%
     arrange(staff_date, start_hour)
   
+  if (!is.null(team_name)) {
+    shift_plan <- shift_plan %>%
+      mutate(team = team_name)
+  }
+  
   coverage <- time_slots %>%
     select(staff_date, hour, row_id) %>%
     inner_join(shift_cat %>% mutate(col_id = row_number()),
-               by = "staff_date") %>%
+               by = "staff_date",
+               relationship = "many-to-many") %>%
     mutate(covers = if_else(hour >= start_hour & hour < end_hour, 1L, 0L)) %>%
     left_join(shift_plan,
               by = c("staff_date", "shift_id", "start_hour", "end_hour")) %>%
@@ -158,6 +162,11 @@ solve_shift_lp <- function(staffing_df,
     left_join(staffing_df, by = c("staff_date", "hour")) %>%
     arrange(staff_date, hour)
   
+  if (!is.null(team_name)) {
+    coverage <- coverage %>%
+      mutate(team = team_name)
+  }
+  
   list(
     lp_obj       = lp_sol$objval,
     shift_plan   = shift_plan,
@@ -168,19 +177,41 @@ solve_shift_lp <- function(staffing_df,
 # ------------------------------------------------------------
 # Main
 # ------------------------------------------------------------
-erlang_results <- read_csv(in_path, show_col_types = FALSE)
+in_files <- list.files(
+  base_out_dir,
+  pattern = "erlang_output_v2.csv",
+  recursive = TRUE,
+  full.names = TRUE
+)
 
-staffing_df <- prepare_staffing(erlang_results, use_shrinkage = TRUE)
+if (length(in_files) == 0) {
+  stop("Ingen erlang_output_v2.csv fundet under: ", base_out_dir)
+}
 
-solution <- solve_shift_lp(staffing_df)
-
-shift_plan <- solution$shift_plan %>%
-  select(-shift_id)
-
-hourly_cover <- solution$hourly_cover
-
-write_csv(shift_plan, out_plan)
-write_csv(hourly_cover, out_cov)
-
-message("✔ Shift plan gemt: ", out_plan)
-message("✔ Hourly coverage gemt: ", out_cov)
+for (in_path in in_files) {
+  team_name <- basename(dirname(dirname(in_path)))
+  erlang_results <- read_csv(in_path, show_col_types = FALSE)
+  if ("team" %in% names(erlang_results)) {
+    erlang_results <- erlang_results %>%
+      filter(team == team_name)
+  }
+  
+  staffing_df <- prepare_staffing(erlang_results, use_shrinkage = TRUE)
+  solution <- solve_shift_lp(staffing_df, team_name = team_name)
+  
+  shift_plan <- solution$shift_plan %>%
+    select(-shift_id)
+  
+  hourly_cover <- solution$hourly_cover
+  
+  out_dir  <- file.path(base_out_dir, team_name, "staffing")
+  dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+  out_plan <- file.path(out_dir, "shift_plan_optimized_v2.csv")
+  out_cov  <- file.path(out_dir, "hourly_coverage_vs_required_v2.csv")
+  
+  write_csv(shift_plan, out_plan)
+  write_csv(hourly_cover, out_cov)
+  
+  message("✔ Shift plan gemt: ", out_plan)
+  message("✔ Hourly coverage gemt: ", out_cov)
+}

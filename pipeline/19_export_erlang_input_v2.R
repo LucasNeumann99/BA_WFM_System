@@ -26,11 +26,10 @@ forecast_start <- ymd_hms(op_cfg$forecast_start, tz = tz_info)
 forecast_end   <- ymd_hms(op_cfg$forecast_end,   tz = tz_info)
 
 paths <- get_pipeline_paths()
-erlang_dir <- file.path(paths$output, "v2", "erlang")
-dir.create(erlang_dir, recursive = TRUE, showWarnings = FALSE)
+base_out_dir <- file.path(paths$output, "baseline_glm")
+dir.create(base_out_dir, recursive = TRUE, showWarnings = FALSE)
 
 fc_path <- file.path(paths$results, "v2", "scenarios", "fc_operational_scenario_v2.rds")
-out_csv <- file.path(erlang_dir, "erlang_input_v2.csv")
 
 fc <- readRDS(fc_path) %>%
   filter(ds >= forecast_start, ds <= forecast_end)
@@ -72,5 +71,11 @@ erlang_input <- fc %>%
     run_id
   )
 
-write_csv(erlang_input, out_csv)
-message("✔ Erlang input gemt: ", out_csv)
+teams <- sort(unique(erlang_input$team))
+for (tm in teams) {
+  erlang_dir <- file.path(base_out_dir, tm, "erlang")
+  dir.create(erlang_dir, recursive = TRUE, showWarnings = FALSE)
+  out_csv <- file.path(erlang_dir, "erlang_input_v2.csv")
+  write_csv(filter(erlang_input, team == tm), out_csv)
+  message("✔ Erlang input gemt: ", out_csv)
+}

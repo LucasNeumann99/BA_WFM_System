@@ -33,8 +33,7 @@ def _load_paths():
 
 
 OUTPUT_BASE, RESULTS_BASE = _load_paths()
-INPUT_CSV = OUTPUT_BASE / "v2" / "erlang" / "erlang_input_v2.csv"
-OUTPUT_CSV = OUTPUT_BASE / "v2" / "erlang" / "erlang_output_v2.csv"
+BASELINE_DIR = OUTPUT_BASE / "baseline_glm"
 INTERVAL_SECONDS = 3600  # antager 1 times intervaller
 MAX_AGENTS = 200
 
@@ -166,11 +165,14 @@ def compute_staffing(row):
 
 
 def main():
-    if not INPUT_CSV.exists():
-        sys.stderr.write(f"Input CSV findes ikke: {INPUT_CSV}\n")
+    if not BASELINE_DIR.exists():
+        sys.stderr.write(f"Baseline dir findes ikke: {BASELINE_DIR}\n")
         sys.exit(1)
 
-    df = pd.read_csv(INPUT_CSV)
+    input_files = sorted(BASELINE_DIR.glob("*/erlang/erlang_input_v2.csv"))
+    if not input_files:
+        sys.stderr.write(f"Ingen input CSV fundet i: {BASELINE_DIR}\n")
+        sys.exit(1)
 
     required_cols = [
         "team",
@@ -184,37 +186,43 @@ def main():
         "scenario_label",
         "run_id",
     ]
-    missing = [c for c in required_cols if c not in df.columns]
-    if missing:
-        sys.stderr.write(f"Mangler kolonner i input: {missing}\n")
-        sys.exit(1)
 
-    results = df.apply(compute_staffing, axis=1, result_type="expand")
+    for input_csv in input_files:
+        df = pd.read_csv(input_csv)
+        missing = [c for c in required_cols if c not in df.columns]
+        if missing:
+            sys.stderr.write(
+                f"Mangler kolonner i input ({input_csv}): {missing}\n"
+            )
+            sys.exit(1)
 
-    out_df = pd.concat(
-        [
-            df[
-                [
-                    "team",
-                    "ds",
-                    "calls",
-                    "aht_sec",
-                    "target_sl",
-                    "threshold_sec",
-                    "shrinkage",
-                    "model_used",
-                    "scenario_label",
-                    "run_id",
-                ]
+        results = df.apply(compute_staffing, axis=1, result_type="expand")
+
+        out_df = pd.concat(
+            [
+                df[
+                    [
+                        "team",
+                        "ds",
+                        "calls",
+                        "aht_sec",
+                        "target_sl",
+                        "threshold_sec",
+                        "shrinkage",
+                        "model_used",
+                        "scenario_label",
+                        "run_id",
+                    ]
+                ],
+                results,
             ],
-            results,
-        ],
-        axis=1,
-    )
+            axis=1,
+        )
 
-    OUTPUT_CSV.parent.mkdir(parents=True, exist_ok=True)
-    out_df.to_csv(OUTPUT_CSV, index=False)
-    print(f"✔ Erlang C output gemt: {OUTPUT_CSV}")
+        output_csv = input_csv.parent / "erlang_output_v2.csv"
+        output_csv.parent.mkdir(parents=True, exist_ok=True)
+        out_df.to_csv(output_csv, index=False)
+        print(f"✔ Erlang C output gemt: {output_csv}")
 
 
 if __name__ == "__main__":

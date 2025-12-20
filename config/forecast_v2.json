@@ -5,8 +5,8 @@
     "gap_days": 0
   },
   "operational": {
-    "forecast_start": "2025-10-01 00:00:00",
-    "forecast_end":   "2025-11-11 23:00:00"
+    "forecast_start": "2026-01-01 00:00:00",
+    "forecast_end":   "2026-06-30 23:00:00"
   },
-  "timezone": "Europe/Copenhagen"
+  "timezone": "UTC"
 }

@@ -62,3 +62,4 @@ for (i in seq_len(nrow(shocks))) {
 
 saveRDS(fc, fc_out_path)
 message("✔ Scenarier anvendt. Gemt til: ", fc_out_path)
+

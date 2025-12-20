@@ -37,12 +37,8 @@ metrics_out_path<- file.path(diag_dir, "metrics_backtest_rolling.csv")
 df_base <- readRDS(here("data_processed", "ts_hourly_all_teams_struct_adj.rds"))
 df_lags <- readRDS(here("data_processed", "ts_hourly_all_teams_lags.rds"))
 
-teams_use_lags <- c(
-  "Team DK 1, Travelcare",
-  "Team FI 1, Travelcare",
-  "Team NO 1, Travelcare",
-  "Team SE 1, Travelcare"
-)
+# Kør baseline på alle teams (ingen lag i backtest)
+teams_use_lags <- character(0)
 
 # ------------------------------------------------------------
 # Helper: beregn rolling fold-datoer
@@ -133,7 +129,8 @@ train_and_forecast <- function(team, fold, use_lags) {
       mutate(
         hour    = factor(hour),
         weekday = factor(weekday, ordered = FALSE),
-        month   = factor(month)
+        month   = factor(month),
+        year_c  = as.numeric(year) - 2024
       ) %>%
       droplevels()
     
@@ -141,11 +138,12 @@ train_and_forecast <- function(team, fold, use_lags) {
       mutate(
         hour    = factor(hour,    levels = levels(dtrain$hour)),
         weekday = factor(weekday, levels = levels(dtrain$weekday)),
-        month   = factor(month,   levels = levels(dtrain$month))
+        month   = factor(month,   levels = levels(dtrain$month)),
+        year_c  = as.numeric(year) - 2024
       )
     
     form <- y ~ hour + weekday + month +
-      week + year +
+      year_c +
       Juleferie + Vinterferie + Påskeferie +
       Sommerferie + Efterårsferie
     

@@ -13,13 +13,22 @@ Denne mappe er **den officielle BA-projektmappe**. `main` er stabil; `glm` bruge
 - 13: sammenligner baseline vs. lag (uplift/R2).
 - 14: træner endelig NegBin pr. team (lag eller ej).
 - 15: evaluerer endelig model, gemmer plots og metrics.
+- 16: rolling backtest (baseline for alle teams).
+- 17: operational forecast (baseline for alle teams, bruger future features).
+- 18: anvender volumen-shocks.
+- 19–21: Erlang C + staffing pr. team.
 
 ### Endelig modelvalg (branch `glm`)
-- Lag-model (`GLM_NegBin_lags`): Team FI 1, Team NO 1, Team SE 1.
-- Baseline uden lag (`GLM_NegBin_baseline`): Team DK 1, Team SE 2.
 - Forecasts: `<results_base>/final/glm/fc_final_glm_negbin.rds`
-- Metrics: `<output_base>/diagnostics/metrics_final_glm.csv` og `<results_base>/final/glm/metrics_final_glm.rds`
+- Metrics (samlet): `<results_base>/final/glm/metrics_final_glm.rds`
 - Plots: `figures/final/glm/<team>/`
+
+### Aktiv v2 pipeline (baseline for alle teams)
+- Operational forecast bruger kun baseline (ingen lag/rekursion) for alle teams.
+- Output pr. team: `<output_base>/baseline_glm/<team>/`
+  - diagnostics: `.../diagnostics/metrics_final_glm.csv` + `model_summary_final_glm.csv`
+  - erlang: `.../erlang/erlang_input_v2.csv` + `erlang_output_v2.csv`
+  - staffing: `.../staffing/shift_plan_optimized_v2.csv` + `hourly_coverage_vs_required_v2.csv`
 
 ### Aktiv GLM-model (main)
 - Default er de endelige GLM NegBin-modeller (mix af lag/baseline) fra ovenstående valg.
@@ -34,10 +43,10 @@ Denne mappe er **den officielle BA-projektmappe**. `main` er stabil; `glm` bruge
 - `glm`: GLM-eksperimenter og endelige GLM-valg (lag vs. baseline) før de lægges på `main`.
 
 ## Output paths
-- Output og results gemmes uden for repoet.
+- Output gemmes uden for repoet; results bliver i repoet.
 - Justeres i `config/paths.json`:
   - `output_base` (fx `../../BA_WFM_Output/output`)
-  - `results_base` (fx `../../BA_WFM_Output/results`)
+  - `results_base` (fx `results`)
 
 ## Mappestruktur
 - data_raw/                → Rå CSV-filer
@@ -46,9 +55,9 @@ Denne mappe er **den officielle BA-projektmappe**. `main` er stabil; `glm` bruge
 - model_functions/         → FE, modelling, LP, Erlang
 - pipeline/                → Scripts der kører workflowet
 - shiny_app/               → Shiny-dashboard
-- <output_base>/diagnostics/ → Diagnoseplots og metrics
-- <output_base>/forecasts/   → Forecasts til Erlang
-- <output_base>/staffing/    → Optimerede bemandingsplaner
+- <output_base>/baseline_glm/<team>/diagnostics/ → Team-metrics og modelsummary
+- <output_base>/baseline_glm/<team>/erlang/      → Erlang input/output pr. team
+- <output_base>/baseline_glm/<team>/staffing/    → Optimerede bemandingsplaner pr. team
 
 ## Kørsel (lokalt)
 - Kør hele GLM-workflowet fra ren start:  

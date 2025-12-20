@@ -37,11 +37,7 @@ df_train_base <- df_base %>% filter(ds < train_cutoff)
 df_test_base  <- df_base %>% filter(ds >= ymd("2025-01-01"))
 
 # Teams der skal bruge lag-features (fra uplift-analysen)
-teams_use_lags <- c(
-  "Team FI 1, Travelcare",
-  "Team NO 1, Travelcare",
-  "Team SE 1, Travelcare"
-)
+teams_use_lags <- c()
 
 teams <- unique(df_base$team)
 models_out <- list()
@@ -164,3 +160,4 @@ saveRDS(models_out, out_model)
 saveRDS(bind_rows(fc_list), out_fc)
 
 message("✔ FINAL NegBin GLM baseline trained and saved.")
+

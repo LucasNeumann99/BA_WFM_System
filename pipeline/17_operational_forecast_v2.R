@@ -31,20 +31,23 @@ out_path <- file.path(op_dir, "fc_operational_raw_v2.rds")
 # ------------------------------------------------------------
 df_base <- readRDS(here("data_processed", "ts_hourly_all_teams_struct_adj.rds"))
 df_lags <- readRDS(here("data_processed", "ts_hourly_all_teams_lags.rds"))
+df_future <- readRDS(here("data_processed", "ts_future_all_teams_features.rds"))
 
-teams_use_lags <- c(
-  "Team DK 1, Travelcare",
-  "Team FI 1, Travelcare",
-  "Team NO 1, Travelcare",
-  "Team SE 1, Travelcare"
-)
+# Slå lag-modeller fra i v2-operational; behold koden til evt. senere brug.
+# teams_use_lags <- c(
+#   "Team DK 1, Travelcare",
+#   "Team FI 1, Travelcare",
+#   "Team NO 1, Travelcare",
+#   "Team SE 1, Travelcare"
+# )
+teams_use_lags <- character(0)
 
 # ------------------------------------------------------------
 # Helper: train baseline model
 # ------------------------------------------------------------
 train_baseline <- function(team, train_df) {
   form <- y ~ hour + weekday + month +
-    week + year +
+    year_c +
     Juleferie + Vinterferie + Påskeferie +
     Sommerferie + Efterårsferie
   
@@ -52,7 +55,8 @@ train_baseline <- function(team, train_df) {
     mutate(
       hour    = factor(hour),
       weekday = factor(weekday, ordered = FALSE),
-      month   = factor(month)
+      month   = factor(month),
+      year_c  = as.numeric(year) - 2024
     ) %>%
     droplevels()
   
@@ -63,8 +67,7 @@ train_baseline <- function(team, train_df) {
 # Helper: train lag model
 # ------------------------------------------------------------
 train_lag <- function(team, train_df) {
-  form <- y ~ hour + weekday + month +
-    week + year +
+  form <- y ~ hour + weekday + month + year +
     Juleferie + Vinterferie + Påskeferie +
     Sommerferie + Efterårsferie +
     lag_1 + lag_24 + lag_48 + lag_168 +
@@ -146,7 +149,8 @@ forecast_baseline <- function(team, model, horizon_df, train_levels) {
     mutate(
       hour    = factor(hour,    levels = train_levels$hour),
       weekday = factor(weekday, levels = train_levels$weekday),
-      month   = factor(month,   levels = train_levels$month)
+      month   = factor(month,   levels = train_levels$month),
+      year_c  = as.numeric(year) - 2024
     ) %>%
     transmute(
       team = team,
@@ -177,7 +181,7 @@ for (tm in unique(df_base$team)) {
       drop_na(lag_1, lag_24, lag_48, lag_168,
               roll_mean_24, roll_mean_72, roll_mean_168)
     
-    horizon_df <- df_base %>%
+    horizon_df <- df_future %>%
       filter(team == tm, ds >= forecast_start, ds <= forecast_end)
     
     if (nrow(hist_df) == 0 || nrow(horizon_df) == 0) next
@@ -190,11 +194,12 @@ for (tm in unique(df_base$team)) {
       mutate(
         hour    = factor(hour),
         weekday = factor(weekday, ordered = FALSE),
-        month   = factor(month)
+        month   = factor(month),
+        year_c  = as.numeric(year) - 2024
       ) %>%
       droplevels()
     
-    horizon_df <- df_base %>%
+    horizon_df <- df_future %>%
       filter(team == tm, ds >= forecast_start, ds <= forecast_end)
     
     if (nrow(hist_df) == 0 || nrow(horizon_df) == 0) next
