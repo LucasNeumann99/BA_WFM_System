@@ -60,5 +60,30 @@ Denne mappe er **den officielle BA-projektmappe**. `main` er stabil; `glm` bruge
 
 ## Kørsel (lokalt)
 - Kør hele GLM-workflowet fra ren start:  
-  `for s in pipeline/0{1..15}*.R; do Rscript "$s"; done`
-- Alternativt kun final GLM: kør 10–15.
+  # 01–09: data & features
+Rscript pipeline/01_*.R
+Rscript pipeline/02_*.R
+Rscript pipeline/03_*.R
+Rscript pipeline/04_*.R
+Rscript pipeline/05_*.R
+Rscript pipeline/06_*.R
+Rscript pipeline/07_*.R
+Rscript pipeline/08_*.R
+Rscript pipeline/09_*.R
+
+# 10-13: GLM Træning
+Rscript pipeline/10_train_baseline_models.R
+Rscript pipeline/11_evaluate_test_forecasts.R
+Rscript pipeline/12_train_glm_lags.R
+Rscript pipeline/13_evaluate_models.R
+
+# 14–15: final GLM 
+Rscript pipeline/14_train_final_glm.R
+Rscript pipeline/15_evaluate_final_glm.R
+
+# 16–21: v2-kæden (backtest + operational → Erlang → vagtplan)
+Rscript pipeline/16_backtest_rolling_final_glm.R
+Rscript pipeline/17_operational_forecast_v2.R
+Rscript pipeline/18_apply_volume_shocks_v2.R
+python  pipeline/20_erlang_c_v2.py
+Rscript pipeline/21_optimize_shifts_v2.R
