@@ -5,7 +5,6 @@ Denne mappe er **den officielle BA-projektmappe**. `main` er stabil; `glm` bruge
 
 ## Target (y)
 - Y er “Real Offered Calls” (`real_offered_call`) aggregeret pr. team/time (`pipeline/03_aggregate_hourly.R`).
-- Kunde nr. (customer_code) C370 fjernes for Team NO på call-niveau før aggregation.
 
 ## Pipeline
 - 01–09: ingestion → cleaning → hourly aggregation → features → lag-features → forecast horizon.
