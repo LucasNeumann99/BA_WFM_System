@@ -1,6 +1,6 @@
 # ============================================================
 # 14_train_final_glm.R (CLEAN + CORRECT)
-# FINAL Negative Binomial GLM baseline
+# FINAL Negative Binomial GLM baseline (ingen lag)
 # - Train 24h
 # - Save models + forecasts
 # ============================================================
@@ -18,7 +18,6 @@ message("Training FINAL NegBin GLM baseline (24h).")
 # Paths
 # ------------------------------------------------------------
 ts_baseline_path <- here("data_processed", "ts_hourly_all_teams_struct_adj.rds")
-ts_lags_path     <- here("data_processed", "ts_hourly_all_teams_lags.rds")
 out_model        <- here("models", "final_glm_negbin_by_team.rds")
 paths <- get_pipeline_paths()
 out_fc           <- file.path(paths$results, "final", "glm", "fc_final_glm_negbin.rds")
@@ -29,15 +28,11 @@ dir.create(file.path(paths$results, "final", "glm"), recursive = TRUE, showWarni
 # Load data
 # ------------------------------------------------------------
 df_base <- readRDS(ts_baseline_path)
-df_lags <- readRDS(ts_lags_path)
 
 train_cutoff <- ymd("2024-12-31")
 
 df_train_base <- df_base %>% filter(ds < train_cutoff)
 df_test_base  <- df_base %>% filter(ds >= ymd("2025-01-01"))
-
-# Teams der skal bruge lag-features (fra uplift-analysen)
-teams_use_lags <- c()
 
 teams <- unique(df_base$team)
 models_out <- list()
@@ -54,35 +49,17 @@ numeric_vars <- c(
   "Sommerferie", "Efterårsferie"
 )
 
-lag_vars <- c(
-  "lag_1", "lag_24", "lag_48", "lag_168",
-  "roll_mean_24", "roll_mean_72", "roll_mean_168"
-)
-
 # ------------------------------------------------------------
 # Train per team
 # ------------------------------------------------------------
 for (tm in teams) {
   
   message("---- Training NegBin GLM for team: ", tm)
-  
-  use_lags <- tm %in% teams_use_lags
-  
-  if (use_lags) {
-    tr <- df_lags %>%
-      filter(team == tm, ds < train_cutoff) %>%
-      drop_na(all_of(lag_vars))  # fjern tidlige rækker uden lag
-    
-    te <- df_lags %>%
-      filter(team == tm, ds >= ymd("2025-01-01")) %>%
-      drop_na(all_of(lag_vars))  # behold kun hvor lag findes
-  } else {
-    tr <- df_train_base %>% filter(team == tm)
-    te <- df_test_base  %>% filter(team == tm)
-  }
+  tr <- df_train_base %>% filter(team == tm)
+  te <- df_test_base  %>% filter(team == tm)
   
   if (nrow(tr) == 0 || nrow(te) == 0) {
-    warning("Ingen data til træning/forecast for ", tm, " (use_lags = ", use_lags, "). Springes over.")
+    warning("Ingen data til træning/forecast for ", tm, ". Springes over.")
     next
   }
   
@@ -125,21 +102,11 @@ for (tm in teams) {
     mutate(across(all_of(num_vars_other), as.numeric))
   
   # ---------------- Model formula ----------------
-  if (use_lags) {
-    form <- y ~
-      hour + weekday + month +
-      year_c +
-      Juleferie + Vinterferie + Påskeferie +
-      Sommerferie + Efterårsferie +
-      lag_1 + lag_24 + lag_48 + lag_168 +
-      roll_mean_24 + roll_mean_72 + roll_mean_168
-  } else {
-    form <- y ~
-      hour + weekday + month +
-      year_c +
-      Juleferie + Vinterferie + Påskeferie +
-      Sommerferie + Efterårsferie
-  }
+  form <- y ~
+    hour + weekday + month +
+    year_c +
+    Juleferie + Vinterferie + Påskeferie +
+    Sommerferie + Efterårsferie
   
   # ---------------- Train model ----------------
   mod_nb <- glm.nb(formula = form, data = tr)
@@ -148,7 +115,7 @@ for (tm in teams) {
   te <- te %>%
     mutate(
       y_hat  = predict(mod_nb, newdata = te, type = "response"),
-      model_used = if (use_lags) "GLM_NegBin_lags" else "GLM_NegBin_baseline"
+      model_used = "GLM_NegBin_baseline"
     )
   
   fc_list[[tm]]    <- te
@@ -160,4 +127,3 @@ saveRDS(models_out, out_model)
 saveRDS(bind_rows(fc_list), out_fc)
 
 message("✔ FINAL NegBin GLM baseline trained and saved.")
-
