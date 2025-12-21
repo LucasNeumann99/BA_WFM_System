@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # ============================================================
-# 20_erlang_c_v2.py
+# 22_erlang_c_v2.py
 # ------------------------------------------------------------
 # Formål: Beregn bemandingsbehov med en ren Python Erlang C-implementering.
 # Ingen afhængighed til pyworkforce. Numerisk stabilitet via lgamma + log-sum-exp
 # i stedet for factorial, så vi undgår overflow for store n.
 # Input:  <output_base>/v2/erlang/erlang_input_v2.csv
 # Output: <output_base>/v2/erlang/erlang_output_v2.csv
-# Køres med: python pipeline/20_erlang_c_v2.py
+# Køres med: python pipeline/22_erlang_c_v2.py
 # ============================================================
 
 import json

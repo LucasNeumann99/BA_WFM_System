@@ -1,5 +1,5 @@
 # ============================================================
-# 18_apply_volume_shocks_v2.R
+# 20_apply_volume_shocks_v2.R
 # ------------------------------------------------------------
 # Formål: anvend volumen-shocks/breakpoints på operationelle forecasts.
 # Output: <results_base>/v2/scenarios/fc_operational_scenario_v2.rds med y_hat (justeret).
@@ -30,11 +30,11 @@ shocks <- read_csv(shocks_path, show_col_types = FALSE) %>%
 
 # Defensive checks: fail fast with clear message if input is empty/mis-specified
 if (nrow(fc) == 0 || ncol(fc) == 0) {
-  stop("Operational forecast is empty (", fc_raw_path, "). Kør 17_operational_forecast_v2.R med gyldigt forecast-vindue i config/forecast_v2.json.")
+  stop("Operational forecast is empty (", fc_raw_path, "). Kør 19_operational_forecast_v2.R med gyldigt forecast-vindue i config/forecast_v2.json.")
 }
 
 if (!"y_hat_raw" %in% names(fc)) {
-  stop("Kolonnen 'y_hat_raw' mangler i ", fc_raw_path, ". Tjek 17_operational_forecast_v2.R og upstream data.")
+  stop("Kolonnen 'y_hat_raw' mangler i ", fc_raw_path, ". Tjek 19_operational_forecast_v2.R og upstream data.")
 }
 
 fc <- fc %>%
@@ -62,4 +62,3 @@ for (i in seq_len(nrow(shocks))) {
 
 saveRDS(fc, fc_out_path)
 message("✔ Scenarier anvendt. Gemt til: ", fc_out_path)
-

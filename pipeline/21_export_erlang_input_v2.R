@@ -1,5 +1,5 @@
 # ============================================================
-# 19_export_erlang_input_v2.R
+# 21_export_erlang_input_v2.R
 # ------------------------------------------------------------
 # Formål: eksportér volumen til Erlang C fra scenarie-justerede forecasts.
 # Output: <output_base>/v2/erlang/erlang_input_v2.csv med team, ds, volume (= y_hat).

@@ -1,5 +1,5 @@
 # ============================================================
-# 16_backtest_rolling_final_glm.R
+# 18_backtest_rolling_final_glm.R
 # ------------------------------------------------------------
 # Formål: kør rolling-origin backtests for final GLM (lags/baseline) uden volumen-chok.
 # Gemmer forecasts/metrics i v2-mapper. Ingen scenarier anvendes her.

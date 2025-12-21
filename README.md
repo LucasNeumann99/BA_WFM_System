@@ -10,22 +10,26 @@ Denne mappe er **den officielle BA-projektmappe**. `main` er stabil; `glm` bruge
 - 01–09: ingestion → cleaning → hourly aggregation → features → lag-features → forecast horizon.
 - 10–12: GLM baseline og GLM med lags på test (Poisson/NegBin).
 - 13: sammenligner baseline vs. lag (uplift/R2).
-- 14: træner endelig NegBin pr. team (lag eller ej).
-- 15: evaluerer endelig model, gemmer plots og metrics.
-- 16: rolling backtest (baseline for alle teams).
-- 17: operational forecast (baseline for alle teams, bruger future features).
-- 18: anvender volumen-shocks.
-- 19–21: Erlang C + staffing pr. team.
+- 14: træner endelig NegBin pr. team (baseline).
+- 15: evaluerer endelig GLM, gemmer plots og metrics.
+- 16: træner XGBoost residualmodeller pr. team.
+- 17: evaluerer hybrid (GLM + XGB-residual), gemmer plots og metrics.
+- 18: rolling backtest (baseline for alle teams).
+- 19: operational forecast (GLM + XGB-residual, bruger future features).
+- 20: anvender volumen-shocks.
+- 21–23: Erlang C + staffing pr. team.
 
 ### Endelig modelvalg (branch `glm`)
 - Forecasts: `<results_base>/final/glm/fc_final_glm_negbin.rds`
-- Metrics (samlet): `<results_base>/final/glm/metrics_final_glm.rds`
-- Plots: `figures/final/glm/<team>/`
+- Metrics: `<results_base>/final/glm/metrics/metrics_final_glm.(csv|rds)`
+- Summaries: `<results_base>/final/glm/summaries/model_summary_final_glm.csv`
+- Plots: `<results_base>/final/glm/plots/<model>/<team>/`
 
-### Aktiv v2 pipeline (baseline for alle teams)
-- Operational forecast bruger kun baseline (ingen lag/rekursion) for alle teams.
+### Aktiv v2 pipeline (GLM + XGB-residual)
+- Operational forecast bruger GLM + XGB-residual (ingen lag/rekursion) for alle teams.
 - Output pr. team: `<output_base>/baseline_glm/<team>/`
   - diagnostics: `.../diagnostics/metrics_final_glm.csv` + `model_summary_final_glm.csv`
+  - plots: `.../diagnostics/plots/{glm,hybrid}/*.png`
   - erlang: `.../erlang/erlang_input_v2.csv` + `erlang_output_v2.csv`
   - staffing: `.../staffing/shift_plan_optimized_v2.csv` + `hourly_coverage_vs_required_v2.csv`
 
@@ -57,4 +61,3 @@ Denne mappe er **den officielle BA-projektmappe**. `main` er stabil; `glm` bruge
 - <output_base>/baseline_glm/<team>/diagnostics/ → Team-metrics og modelsummary
 - <output_base>/baseline_glm/<team>/erlang/      → Erlang input/output pr. team
 - <output_base>/baseline_glm/<team>/staffing/    → Optimerede bemandingsplaner pr. team
-
