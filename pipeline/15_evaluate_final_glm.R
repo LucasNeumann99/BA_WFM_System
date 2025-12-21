@@ -30,11 +30,11 @@ teams <- unique(fc$team)
 # Directory setup
 # ------------------------------------------------------------
 metrics_base_dir <- file.path(paths$output, "baseline_glm")
-metrics_rds_dir  <- file.path(paths$results, "final", "glm") # teknisk lagring
+metrics_results_dir <- file.path(paths$results, "final", "glm")
 fig_dir          <- here("figures", "final", "glm")
 
 dir.create(metrics_base_dir, recursive = TRUE, showWarnings = FALSE)
-dir.create(metrics_rds_dir, recursive = TRUE, showWarnings = FALSE)
+dir.create(metrics_results_dir, recursive = TRUE, showWarnings = FALSE)
 dir.create(fig_dir,         recursive = TRUE, showWarnings = FALSE)
 
 # ------------------------------------------------------------
@@ -132,7 +132,12 @@ metrics_final <- bind_rows(metrics_all)
 # RDS til intern brug
 saveRDS(
   metrics_final,
-  file.path(metrics_rds_dir, "metrics_final_glm.rds")
+  file.path(metrics_results_dir, "metrics_final_glm.rds")
+)
+
+readr::write_csv(
+  metrics_final,
+  file.path(metrics_results_dir, "metrics_final_glm.csv")
 )
 
 # ------------------------------------------------------------
@@ -148,6 +153,11 @@ slugify <- function(x) {
     str_replace_all("^_|_$", "")
 }
 
+readr::write_csv(
+  model_summary,
+  file.path(metrics_results_dir, "model_summary_final_glm.csv")
+)
+
 walk(unique(model_summary$team), function(tm) {
   out_path <- file.path(
     metrics_base_dir,
@@ -156,6 +166,11 @@ walk(unique(model_summary$team), function(tm) {
     "model_summary_final_glm.csv"
   )
   readr::write_csv(filter(model_summary, team == tm), out_path)
+  
+  readr::write_csv(
+    filter(model_summary, team == tm),
+    file.path(metrics_results_dir, paste0("model_summary_final_glm_", slugify(tm), ".csv"))
+  )
 })
 
 # Model print
@@ -181,5 +196,5 @@ summary(mod_se2)
 
 message("✔ Plotting complete.")
 message("✔ Metrics saved to: ")
-message("  - RDS: ", file.path(metrics_rds_dir, "metrics_final_glm.rds"))
+message("  - RDS: ", file.path(metrics_results_dir, "metrics_final_glm.rds"))
 print(metrics_final)
