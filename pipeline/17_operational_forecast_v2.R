@@ -22,9 +22,9 @@ forecast_start <- ymd_hms(op_cfg$forecast_start, tz = tz_info)
 forecast_end   <- ymd_hms(op_cfg$forecast_end,   tz = tz_info)
 
 paths <- get_pipeline_paths()
-op_dir <- file.path(paths$results, "v2", "operational")
-dir.create(op_dir, recursive = TRUE, showWarnings = FALSE)
-out_path <- file.path(op_dir, "fc_operational_raw_v2.rds")
+results_base_dir <- file.path(paths$results, "v2", "operational")
+by_team_dir <- file.path(results_base_dir, "by_team")
+dir.create(by_team_dir, recursive = TRUE, showWarnings = FALSE)
 
 # ------------------------------------------------------------
 # Data
@@ -223,6 +223,14 @@ for (tm in unique(df_base$team)) {
 }
 
 fc_operational <- bind_rows(fc_list)
-saveRDS(fc_operational, out_path)
+combined_path <- file.path(results_base_dir, "fc_operational_raw_v2.rds")
+saveRDS(fc_operational, combined_path)
+message("✔ Operational rå forecast gemt: ", combined_path)
 
-message("✔ Operational rå forecast gemt: ", out_path)
+walk(unique(fc_operational$team), function(tm) {
+  out_dir <- file.path(by_team_dir, tm)
+  dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+  out_path <- file.path(out_dir, "fc_operational_raw_v2.rds")
+  saveRDS(filter(fc_operational, team == tm), out_path)
+  message("✔ Operational rå forecast gemt: ", out_path)
+})

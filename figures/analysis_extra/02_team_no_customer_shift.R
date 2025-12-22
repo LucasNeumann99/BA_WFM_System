@@ -8,15 +8,14 @@
 #
 # Output:
 # - Konsol-print af kandidater
-# - CSV: <results_base>/diagnostics/team_no_customer_shift_candidates.csv
-# - Plots: figures/diagnostics/team_no/*.png
+# - CSV: figures/analysis_extra/team_no_customer_shift_candidates.csv
+# - Plots: figures/analysis_extra/*.png (kun ved interaktiv kørsel)
 # ============================================================
 
 library(tidyverse)
 library(lubridate)
 library(here)
 
-source(here("model_functions", "paths.R"))
 
 # ------------------------------------------------------------
 # 1) Læs data og filtrér til Team NO
@@ -79,7 +78,7 @@ max_ratio_24_25 <- 0.6    # max 60 % af 2024-niveau i 2025
 
 candidates_24_25 <- no_yearly %>%
   filter(year %in% c(2024, 2025)) %>%
-  select(service_entrance, year, calls, share) %>%
+  dplyr::select(service_entrance, year, calls, share) %>%
   tidyr::pivot_wider(
     names_from  = year,
     values_from = c(calls, share),
@@ -168,8 +167,7 @@ if (interactive() && nrow(store_monthly_by_year) > 0) {
 # ------------------------------------------------------------
 # 7) Gem et lille summary til rapport
 # ------------------------------------------------------------
-paths <- get_pipeline_paths()
-diag_dir <- file.path(paths$results, "diagnostics")
+diag_dir <- here("figures", "analysis_extra")
 dir.create(diag_dir, recursive = TRUE, showWarnings = FALSE)
 
 summary_out <- candidates_24_25 %>%

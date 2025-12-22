@@ -24,12 +24,12 @@ tz_info      <- cfg$timezone %||% "UTC"
 
 paths <- get_pipeline_paths()
 backtest_dir <- file.path(paths$results, "v2", "backtests")
-diag_dir <- file.path(paths$output, "v2", "diagnostics")
+metrics_base_dir <- file.path(paths$output, "baseline_glm")
 dir.create(backtest_dir, recursive = TRUE, showWarnings = FALSE)
-dir.create(diag_dir, recursive = TRUE, showWarnings = FALSE)
+dir.create(metrics_base_dir, recursive = TRUE, showWarnings = FALSE)
 
 fc_out_path     <- file.path(backtest_dir, "fc_backtest_rolling.rds")
-metrics_out_path<- file.path(diag_dir, "metrics_backtest_rolling.csv")
+metrics_out_path<- file.path(metrics_base_dir, "metrics_backtest_rolling.csv")
 
 # ------------------------------------------------------------
 # Data og teams
@@ -207,6 +207,15 @@ metrics <- fc_backtest %>%
   )
 
 write_csv(metrics, metrics_out_path)
+
+walk(unique(metrics$team), function(tm) {
+  out_dir <- file.path(metrics_base_dir, tm, "diagnostics")
+  dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+  write_csv(
+    filter(metrics, team == tm),
+    file.path(out_dir, "metrics_backtest_rolling.csv")
+  )
+})
 
 message("✔ Backtest færdig. Forecasts: ", fc_out_path)
 message("✔ Metrics: ", metrics_out_path)
