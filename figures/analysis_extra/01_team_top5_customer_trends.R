@@ -10,7 +10,7 @@
 #
 # Output:
 # - 5 PNG-filer (én pr. team) i:
-#   figures/diagnostics/team_top5/
+#   figures/analysis_extra/team_top5/
 # ============================================================
 
 library(tidyverse)
@@ -46,7 +46,7 @@ make_safe_name <- function(x) {
 # ------------------------------------------------------------
 # 3) Output-mappe
 # ------------------------------------------------------------
-fig_dir <- here("figures", "diagnostics", "team_top5")
+fig_dir <- here("figures", "analysis_extra", "team_top5")
 dir.create(fig_dir, recursive = TRUE, showWarnings = FALSE)
 
 # ------------------------------------------------------------
@@ -98,7 +98,7 @@ for (tm in focus_teams) {
   # Data til plot
   plot_data <- monthly_by_ent %>%
     semi_join(anon_map, by = "service_entrance") %>%
-    left_join(anon_map %>% select(service_entrance, customer_code),
+    left_join(anon_map %>% dplyr::select(service_entrance, customer_code),
               by = "service_entrance")
   
   # 4d) Plot
@@ -136,4 +136,3 @@ for (tm in focus_teams) {
 }
 
 message("✔ Alle team-plots genereret.")
-

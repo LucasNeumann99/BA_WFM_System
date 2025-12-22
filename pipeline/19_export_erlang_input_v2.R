@@ -28,11 +28,18 @@ forecast_end   <- ymd_hms(op_cfg$forecast_end,   tz = tz_info)
 paths <- get_pipeline_paths()
 base_out_dir <- file.path(paths$output, "baseline_glm")
 dir.create(base_out_dir, recursive = TRUE, showWarnings = FALSE)
+scen_by_team_dir <- file.path(paths$results, "v2", "scenarios", "by_team")
 
-fc_path <- file.path(paths$results, "v2", "scenarios", "fc_operational_scenario_v2.rds")
-
-fc <- readRDS(fc_path) %>%
-  filter(ds >= forecast_start, ds <= forecast_end)
+fc_files <- list.files(
+  scen_by_team_dir,
+  pattern = "fc_operational_scenario_v2.rds",
+  recursive = TRUE,
+  full.names = TRUE
+)
+if (length(fc_files) == 0) {
+  stop("Scenario files not found under: ", scen_by_team_dir,
+       ". Kør 18_apply_volume_shocks_v2.R først.")
+}
 
 # Sikr kolonner: brug eksisterende, ellers default NA
 ensure_col <- function(df, col, default = NA) {
@@ -40,42 +47,50 @@ ensure_col <- function(df, col, default = NA) {
   df
 }
 
-fc <- fc %>%
-  ensure_col("model_used", "unknown") %>%
-  ensure_col("run_id", NA_character_) %>%
-  ensure_col("aht_sec", NA_real_) %>%
-  ensure_col("target_sl", NA_real_) %>%
-  ensure_col("threshold_sec", NA_real_) %>%
-  ensure_col("shrinkage", NA_real_) %>%
-  mutate(
-    calls = if ("volume" %in% names(.)) volume else y_hat,
-    calls = if_else(is.finite(calls), calls, 0),
-    calls = replace_na(calls, 0),
-    aht_sec       = coalesce(aht_sec, AHT_SEC),
-    target_sl     = coalesce(target_sl, TARGET_SL),
-    threshold_sec = coalesce(threshold_sec, THRESHOLD_SEC),
-    shrinkage     = coalesce(shrinkage, SHRINKAGE)
-  )
-
-erlang_input <- fc %>%
-  transmute(
-    team,
-    ds,
-    calls,
-    aht_sec,
-    target_sl,
-    threshold_sec,
-    shrinkage,
-    model_used,
-    scenario_label,
-    run_id
-  )
-
-teams <- sort(unique(erlang_input$team))
-for (tm in teams) {
-  erlang_dir <- file.path(base_out_dir, tm, "erlang")
+for (fc_path in fc_files) {
+  fc <- readRDS(fc_path) %>%
+    filter(ds >= forecast_start, ds <= forecast_end)
+  
+  fc <- fc %>%
+    ensure_col("model_used", "unknown") %>%
+    ensure_col("run_id", NA_character_) %>%
+    ensure_col("aht_sec", NA_real_) %>%
+    ensure_col("target_sl", NA_real_) %>%
+    ensure_col("threshold_sec", NA_real_) %>%
+    ensure_col("shrinkage", NA_real_) %>%
+    mutate(
+      calls = if ("volume" %in% names(.)) volume else y_hat,
+      calls = if_else(is.finite(calls), calls, 0),
+      calls = replace_na(calls, 0),
+      aht_sec       = coalesce(aht_sec, AHT_SEC),
+      target_sl     = coalesce(target_sl, TARGET_SL),
+      threshold_sec = coalesce(threshold_sec, THRESHOLD_SEC),
+      shrinkage     = coalesce(shrinkage, SHRINKAGE)
+    )
+  
+  team_name <- unique(fc$team)
+  if (length(team_name) != 1) {
+    warning("Forventer præcis ét team i ", fc_path, ". Springer over.")
+    next
+  }
+  
+  erlang_input <- fc %>%
+    transmute(
+      team,
+      ds,
+      calls,
+      aht_sec,
+      target_sl,
+      threshold_sec,
+      shrinkage,
+      model_used,
+      scenario_label,
+      run_id
+    )
+  
+  erlang_dir <- file.path(base_out_dir, team_name, "erlang")
   dir.create(erlang_dir, recursive = TRUE, showWarnings = FALSE)
   out_csv <- file.path(erlang_dir, "erlang_input_v2.csv")
-  write_csv(filter(erlang_input, team == tm), out_csv)
+  write_csv(erlang_input, out_csv)
   message("✔ Erlang input gemt: ", out_csv)
 }

@@ -40,14 +40,10 @@ stopifnot(inherits(ts_hist$ds, "POSIXct"))
 # ---- train / test cutoffs ----
 train_end_date <- ymd("2024-12-31")
 test_start_dt  <- ymd_hms("2025-01-01 00:00:00", tz = "UTC")
-test_end_date  <- ymd("2025-11-11")  # juster hvis du vil
-
-# reel test-slut = min(test_end_date, sidste timestamp i data)
 max_ds <- max(ts_hist$ds)
-test_end_dt <- min(
-  ymd_hms(paste0(test_end_date, " 23:00:00"), tz = "UTC"),
-  max_ds
-)
+test_end_dt <- max_ds
+
+year_ref <- 2024
 
 message("Train: <  ", train_end_date)
 message("Test:  >= ", test_start_dt, "  &  <= ", test_end_dt)
@@ -57,9 +53,8 @@ message("Test:  >= ", test_start_dt, "  &  <= ", test_end_dt)
 calendar_features <- c(
   "hour",
   "weekday",    
-  "week",
   "month",
-  "year",
+  "year_c",
   "Vinterferie",
   "Påskeferie",
   "Sommerferie",
@@ -112,10 +107,12 @@ for (tm in teams) {
   
   # split
   train_df <- df_team %>%
-    filter(ds <  train_end_date + days(1))   # inkl. hele 2024
+    filter(ds <  train_end_date + days(1)) %>%  # inkl. hele 2024
+    mutate(year_c = as.numeric(year) - year_ref)
   test_df  <- df_team %>%
     filter(ds >= test_start_dt,
-           ds <= test_end_dt)
+           ds <= test_end_dt) %>%
+    mutate(year_c = as.numeric(year) - year_ref)
   
   # vælg features + target
   train_mod <- train_df %>%
@@ -140,9 +137,8 @@ for (tm in teams) {
         c(
           "factor(hour)",
           "weekday",
-          "factor(week)",
           "factor(month)",
-          "year",
+          "year_c",
           "Vinterferie",
           "Påskeferie",
           "Sommerferie",

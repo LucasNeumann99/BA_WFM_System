@@ -31,11 +31,9 @@ teams <- unique(fc$team)
 # ------------------------------------------------------------
 metrics_base_dir <- file.path(paths$output, "baseline_glm")
 metrics_results_dir <- file.path(paths$results, "final", "glm")
-fig_dir          <- here("figures", "final", "glm")
 
 dir.create(metrics_base_dir, recursive = TRUE, showWarnings = FALSE)
 dir.create(metrics_results_dir, recursive = TRUE, showWarnings = FALSE)
-dir.create(fig_dir,         recursive = TRUE, showWarnings = FALSE)
 
 # ------------------------------------------------------------
 # Metric functions 
@@ -93,21 +91,17 @@ for (tm in teams) {
   model_tag <- if ("model_used" %in% names(df)) unique(df$model_used) else "GLM_NegBin"
   if (length(model_tag) != 1) model_tag <- "GLM_NegBin"
   
-  # Save plots
-  out_team_dir <- file.path(fig_dir, tm)
-  dir.create(out_team_dir, recursive = TRUE, showWarnings = FALSE)
-  
   diag_dir <- file.path(metrics_base_dir, tm, "diagnostics")
   dir.create(diag_dir, recursive = TRUE, showWarnings = FALSE)
   
   ggsave(
-    file.path(out_team_dir, "forecast_vs_actual.png"),
+    file.path(diag_dir, "forecast_vs_actual.png"),
     plot = plot_forecast_vs_actual(df, tm),
     width = 10, height = 5, dpi = 300
   )
   
   ggsave(
-    file.path(out_team_dir, "residuals.png"),
+    file.path(diag_dir, "residuals.png"),
     plot = plot_residuals(df, tm),
     width = 10, height = 5, dpi = 300
   )
@@ -138,6 +132,11 @@ saveRDS(
 readr::write_csv(
   metrics_final,
   file.path(metrics_results_dir, "metrics_final_glm.csv")
+)
+
+readr::write_csv(
+  metrics_final,
+  file.path(metrics_base_dir, "metrics_final_glm.csv")
 )
 
 # ------------------------------------------------------------
