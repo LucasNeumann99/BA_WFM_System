@@ -278,13 +278,20 @@ out_total_csv <- file.path(base_out_dir, "shrinkage_hours_2026_total.csv")
 write_csv(total_2026, out_total_csv)
 
 plot_df <- monthly_2026 %>%
-  mutate(shrinkage = factor(shrinkage, levels = shrinkages))
+  mutate(
+    shrinkage_label = sprintf("%.2f", shrinkage),
+    shrinkage_label = factor(shrinkage_label, levels = sprintf("%.2f", shrinkages))
+  )
 
-p <- ggplot(plot_df, aes(month, hours, colour = shrinkage)) +
+p <- ggplot(plot_df, aes(month, hours, colour = shrinkage_label)) +
   geom_line(linewidth = 1.1) +
   geom_point(size = 1.6) +
   scale_x_date(date_breaks = "1 month", date_labels = "%Y-%m") +
-  scale_colour_brewer(palette = "Dark2") +
+  scale_colour_manual(values = c(
+    "0.25" = "#D93945", # SOS_red
+    "0.30" = "#2A6F97", # Blue
+    "0.35" = "#2E9A5D"  # Green
+  )) +
   scale_y_continuous(labels = scales::comma) +
   theme_minimal(base_size = 12) +
   labs(

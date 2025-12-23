@@ -132,6 +132,15 @@ print(no_yearly_team_ytd)
 # ------------------------------------------------------------
 storebrand_code    <- 370L
 storebrand_pattern <- "Storebrand"   # vi matcher på navn i service_entrance
+year_colors <- c(
+  "#D93945", # SOS_red
+  "#3E3E3E", # Gray_dark
+  "#2A6F97", # Blue
+  "#2E9A5D", # Green
+  "#8E5C9E", # Purple
+  "#F46A74", # SOS_light
+  "#E3B23C"  # Yellow
+)
 
 # Månedlig udvikling for alle service_entrances der indeholder "Storebrand"
 store_monthly_by_year <- no_calls %>%
@@ -158,6 +167,7 @@ if (interactive() && nrow(store_monthly_by_year) > 0) {
       y      = "Antal opkald",
       colour = "År"
     ) +
+    scale_colour_manual(values = year_colors) +
     scale_x_discrete(labels = 1:12) +
     theme_minimal()
   

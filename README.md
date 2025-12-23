@@ -42,10 +42,15 @@ Denne mappe er **den officielle BA-projektmappe**. `main` er stabil; `glm` bruge
 - `glm`: GLM-eksperimenter og endelige GLM-valg (lag vs. baseline) før de lægges på `main`.
 
 ## Output paths
-- Output gemmes uden for repoet; results bliver i repoet.
+- Output og artefakter gemmes uden for repoet (CSV/PNG/RDS).
 - Justeres i `config/paths.json`:
   - `output_base` (fx `../../BA_WFM_Output/output`)
   - `results_base` (fx `results`)
+
+## Artefakter & versionering
+- `figures/`, `results/`, `output/` er **ikke versioneret**.
+- Kun scripts, konfiguration og kode ligger i git.
+- Kør pipelines for at regenerere plots/metrics lokalt.
 
 ## Mappestruktur
 - data_raw/                → Rå CSV-filer
@@ -57,4 +62,3 @@ Denne mappe er **den officielle BA-projektmappe**. `main` er stabil; `glm` bruge
 - <output_base>/baseline_glm/<team>/diagnostics/ → Team-metrics og modelsummary
 - <output_base>/baseline_glm/<team>/erlang/      → Erlang input/output pr. team
 - <output_base>/baseline_glm/<team>/staffing/    → Optimerede bemandingsplaner pr. team
-

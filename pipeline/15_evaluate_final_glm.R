@@ -18,6 +18,14 @@ library(broom)
 source(here("model_functions", "paths.R"))
 
 # ------------------------------------------------------------
+# Plot palette
+# ------------------------------------------------------------
+plot_colors <- c(
+  "Actual" = "#3E3E3E",  # Gray_dark
+  "NegBin" = "#D93945"   # SOS_red
+)
+
+# ------------------------------------------------------------
 # Load forecasts
 # ------------------------------------------------------------
 paths <- get_pipeline_paths()
@@ -58,7 +66,7 @@ plot_forecast_vs_actual <- function(df, tm) {
   ggplot(df, aes(ds)) +
     geom_line(aes(y = y, colour = "Actual")) +
     geom_line(aes(y = y_hat, colour = "NegBin")) +
-    scale_colour_manual(values = c("Actual" = "black", "NegBin" = "red")) +
+    scale_colour_manual(values = plot_colors) +
     theme_minimal() +
     labs(
       title = paste("Final GLM Forecast –", tm),
@@ -69,7 +77,7 @@ plot_forecast_vs_actual <- function(df, tm) {
 
 plot_residuals <- function(df, tm) {
   ggplot(df %>% mutate(resid = y - y_hat), aes(ds, resid)) +
-    geom_line() +
+    geom_line(color = plot_colors[["Actual"]]) +
     geom_hline(yintercept = 0, linetype = "dashed") +
     theme_minimal() +
     labs(
@@ -127,11 +135,6 @@ metrics_final <- bind_rows(metrics_all)
 saveRDS(
   metrics_final,
   file.path(metrics_results_dir, "metrics_final_glm.rds")
-)
-
-readr::write_csv(
-  metrics_final,
-  file.path(metrics_results_dir, "metrics_final_glm.csv")
 )
 
 readr::write_csv(

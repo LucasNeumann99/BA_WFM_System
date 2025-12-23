@@ -44,6 +44,17 @@ make_safe_name <- function(x) {
 }
 
 # ------------------------------------------------------------
+# Palette
+# ------------------------------------------------------------
+cust_colors <- c(
+  "#D93945", # SOS_red
+  "#3E3E3E", # Gray_dark
+  "#2E9A5D", # Green
+  "#2A6F97", # Blue
+  "#8E5C9E"  # Purple
+)
+
+# ------------------------------------------------------------
 # 3) Output-mappe
 # ------------------------------------------------------------
 fig_dir <- here("figures", "analysis_extra", "team_top5")
@@ -112,6 +123,7 @@ for (tm in focus_teams) {
       y = "Antal opkald",
       colour = "Customer code"
     ) +
+    scale_colour_manual(values = cust_colors) +
     scale_x_date(date_breaks = "6 months", date_labels = "%Y-%m") +
     theme_minimal(base_size = 11) +
     theme(

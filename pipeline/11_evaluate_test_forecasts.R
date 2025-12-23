@@ -16,6 +16,13 @@ fc_path      <- here("data_processed", "fc_test_glm_by_team.rds")
 metrics_path <- here("data_processed", "metrics_test_glm_by_team.rds")
 models_base_path <- here("models", "baseline_glm_by_team.rds")
 
+# ---- palette ----
+plot_colors <- c(
+  "Actual" = "#3E3E3E",  # Gray_dark
+  "Poisson" = "#2A6F97", # Blue
+  "NegBin" = "#D93945"   # SOS_red
+)
+
 fig_base_dir <- here("figures", "test_evaluation")
 dir.create(fig_base_dir, recursive = TRUE, showWarnings = FALSE)
 
@@ -106,6 +113,7 @@ plot_forecast_vs_actual <- function(df_team, team_name) {
   
   ggplot(df_long, aes(ds, value, colour = series)) +
     geom_line() +
+    scale_colour_manual(values = plot_colors, breaks = names(plot_colors)) +
     theme_minimal() +
     labs(title = paste("Forecast vs Actual –", team_name),
          x = "Tid", y = "Antal opkald")
@@ -126,6 +134,7 @@ plot_forecast_week_zoom <- function(df_team, team_name) {
   
   ggplot(df_long, aes(ds, value, colour = series)) +
     geom_line() +
+    scale_colour_manual(values = plot_colors, breaks = names(plot_colors)) +
     theme_minimal() +
     labs(title = paste("Forecast vs Actual – uge-zoom (", team_name, ")"),
          x = "Tid", y = "Antal opkald")
@@ -146,6 +155,7 @@ plot_residuals_time <- function(df_team, team_name) {
   ggplot(df_res, aes(ds, residual, colour = model)) +
     geom_hline(yintercept = 0, linetype = "dashed") +
     geom_line() +
+    scale_colour_manual(values = c("Poisson" = "#2A6F97", "NegBin" = "#D93945")) +
     theme_minimal() +
     labs(title = paste("Residualer over tid –", team_name),
          x = "Tid", y = "Residual")
@@ -208,7 +218,7 @@ plot_error_heatmap <- function(df_team, team_name, best_model) {
   
   ggplot(agg, aes(hour, weekday, fill = MAPE)) +
     geom_tile() +
-    scale_fill_viridis_c() +
+    scale_fill_gradient(low = "#3E3E3E", high = "#D93945") +
     theme_minimal() +
     labs(
       title = paste("MAPE heatmap –", best_model, team_name),

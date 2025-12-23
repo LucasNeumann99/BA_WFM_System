@@ -10,9 +10,16 @@ data_processed/
 # Output & artefakter
 plots/
 output/
+results/
+figures/
+analytics/
 
 # Modeller
 models/*.rds
+
+# Keep analysis scripts in figures
+!figures/analysis_extra/
+!figures/analysis_extra/**/*.R
 
 # OS
 .DS_Store
