@@ -13,10 +13,10 @@ library(jsonlite)
 source(here("model_functions", "paths.R"))
 
 # Standardparametre til Erlang C (kan overskrives hvis de findes i data)
-AHT_SEC       <- 316      # gennemsnitlig AHT i sek
+AHT_SEC       <- 330      # gennemsnitlig AHT i sek
 TARGET_SL     <- 0.80     # mål for service level (fx 80 %)
 THRESHOLD_SEC <- 25       # SLA-grænse i sek
-SHRINKAGE     <- 0.35     # forventet shrinkage (fx 35 %)
+SHRINKAGE     <- 0.30     # forventet shrinkage (fx 35 %)
 
 cfg <- fromJSON(here("config", "forecast_v2.json"))
 tz_info <- cfg$timezone %||% "UTC"

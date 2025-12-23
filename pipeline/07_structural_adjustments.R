@@ -2,7 +2,7 @@
 # 07_structural_adjustments.R
 # ------------------------------------------------------------
 # LIGE NU:
-# - Ingen ekstra justeringer.
+# - Structural level shift
 # - Storebrand (C370) er allerede filtreret ud i 03_aggregate_hourly.R
 #
 # Input:
