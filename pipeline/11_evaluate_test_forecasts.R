@@ -3,13 +3,16 @@
 # ------------------------------------------------------------
 # Evaluerer baseline GLM (Poisson & NegBin) på testperioden
 # + Tilføjer Explained R² og McFadden pseudo-R²
-# + Gemmer alle plots i figures/test_evaluation/<team>/
+# + Gemmer alle plots i test_evaluation/<team> (repo-root)
 # ============================================================
 
 library(tidyverse)
 library(lubridate)
 library(here)
 library(viridis)
+
+source(here("model_functions", "paths.R"))
+paths <- get_pipeline_paths()
 
 # ---- paths ----
 fc_path      <- here("data_processed", "fc_test_glm_by_team.rds")
@@ -23,7 +26,7 @@ plot_colors <- c(
   "NegBin" = "#D93945"   # SOS_red
 )
 
-fig_base_dir <- here("figures", "test_evaluation")
+fig_base_dir <- here("test_evaluation")
 dir.create(fig_base_dir, recursive = TRUE, showWarnings = FALSE)
 
 # ---- load data ----

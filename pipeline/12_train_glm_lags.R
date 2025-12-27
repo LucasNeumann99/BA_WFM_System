@@ -18,6 +18,7 @@ library(tidyverse)
 library(lubridate)
 library(here)
 library(MASS)    # glm.nb
+library(jsonlite)
 
 # undgå konflikter med MASS::select osv.
 select <- dplyr::select
@@ -41,15 +42,28 @@ stopifnot(all(c("team", "ds", "y") %in% names(ts_lags)))
 stopifnot(inherits(ts_lags$ds, "POSIXct"))
 
 # ---- train / test perioder ----
-train_end_date <- ymd("2024-12-31")
-test_start_dt  <- ymd_hms("2025-01-01 00:00:00", tz = "UTC")
-test_end_date  <- ymd("2025-11-11")
+cfg <- fromJSON(here("config", "forecast_v2.json"))
+tz_info <- if (!is.null(cfg$timezone) && nzchar(cfg$timezone)) cfg$timezone else "UTC"
+eval_cfg <- if (!is.null(cfg$evaluation)) cfg$evaluation else list()
 
-max_ds <- max(ts_lags$ds)
-test_end_dt <- min(
-  ymd_hms(paste0(test_end_date, " 23:00:00"), tz = "UTC"),
-  max_ds
-)
+test_start_val <- if (!is.null(eval_cfg$test_start) && nzchar(eval_cfg$test_start)) {
+  eval_cfg$test_start
+} else {
+  "2025-01-01 00:00:00"
+}
+test_end_val <- if (!is.null(eval_cfg$test_end) && nzchar(eval_cfg$test_end)) {
+  eval_cfg$test_end
+} else {
+  ""
+}
+
+test_start_dt <- ymd_hms(test_start_val, tz = tz_info)
+test_end_dt <- ymd_hms(test_end_val, tz = tz_info)
+if (is.na(test_end_dt)) {
+  test_end_dt <- max(ts_lags$ds)
+}
+
+train_end_date <- as.Date(test_start_dt) - days(1)
 
 message("Train: <  ", train_end_date)
 message("Test:  >= ", test_start_dt, "  &  <= ", test_end_dt)

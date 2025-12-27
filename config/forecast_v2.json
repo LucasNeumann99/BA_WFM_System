@@ -6,7 +6,11 @@
   },
   "operational": {
     "forecast_start": "2026-01-01 00:00:00",
-    "forecast_end":   "2026-12-31 23:00:00"
+    "forecast_end": "2026-12-31 23:00:00"
+  },
+  "evaluation": {
+    "test_start": "2025-01-01 00:00:00",
+    "test_end": "2025-12-31 23:00:00"
   },
   "timezone": "UTC"
 }

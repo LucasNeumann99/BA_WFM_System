@@ -6,12 +6,13 @@
 # - Kun real_offered_call (TRUE/1)
 #
 # Output:
-# - figures/analysis_extra/Erlang_C/avg_call_handling_time_sec_by_team.csv
+# - <output_base>/Manning/extra_analytics/Erlang_C/avg_call_handling_time_sec_by_team.csv
 # ============================================================
 
 library(tidyverse)
 library(here)
 
+source(here("model_functions", "paths.R"))
 calls <- readRDS(here("data_processed", "calls_clean.rds"))
 
 if (!"avg_call_handling_time_sec" %in% names(calls)) {
@@ -68,7 +69,12 @@ overall <- df %>%
 out <- bind_rows(per_team, overall) %>%
   dplyr::select(team, everything())
 
-out_dir <- here("figures", "analysis_extra", "Erlang_C")
+out_dir <- file.path(
+  get_pipeline_paths()$output,
+  "Manning",
+  "extra_analytics",
+  "Erlang_C"
+)
 dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 out_path <- file.path(out_dir, "avg_call_handling_time_sec_by_team.csv")
 

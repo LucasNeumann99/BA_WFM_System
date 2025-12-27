@@ -17,9 +17,7 @@ analytics/
 # Modeller
 models/*.rds
 
-# Keep analysis scripts in figures
-!figures/analysis_extra/
-!figures/analysis_extra/**/*.R
+# Analysis scripts live in analysis_extra/ (tracked)
 
 # OS
 .DS_Store

@@ -14,6 +14,9 @@ library(tidyverse)
 library(lubridate)
 library(here)
 
+source(here("model_functions", "paths.R"))
+paths <- get_pipeline_paths()
+
 # ------------------------------------------------------------
 # Paths
 # ------------------------------------------------------------
@@ -28,7 +31,7 @@ models_lags_path <- here("models", "glm_lags_by_team.rds")
 
 out_metrics_path <- here("data_processed", "metrics_compare_baseline_vs_lags.rds")
 
-plot_dir <- here("figures", "model_compare")
+plot_dir <- here("test_evaluation", "model_compare")
 dir.create(plot_dir, recursive = TRUE, showWarnings = FALSE)
 
 # ------------------------------------------------------------
@@ -203,7 +206,7 @@ p_rmse <- ggplot(compare, aes(x = team, y = RMSE_uplift)) +
   coord_flip() +
   scale_y_continuous(labels = scales::percent) +
   labs(
-    title = "RMSE Uplift (GLM+lags vs Baseline — bedste model pr. team)",
+    title = "Effekt af lag + rolling mean vs. baseline GLM (tid + ferie) — RMSE",
     y     = "Uplift (%)",
     x     = ""
   )
@@ -216,7 +219,7 @@ p_r2 <- ggplot(compare, aes(x = team, y = R2_gain)) +
   geom_col(fill = "#2E9A5D") +
   coord_flip() +
   labs(
-    title = "Explained Variance R² — Gain (GLM+lags vs Baseline)",
+    title = "Effekt af lag + rolling mean vs. baseline GLM (tid + ferie) — R² gain",
     y     = "Δ R²",
     x     = ""
   )

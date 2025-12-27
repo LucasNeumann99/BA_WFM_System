@@ -2,8 +2,8 @@
 # 21_optimize_shifts_v2.R
 # ------------------------------------------------------------
 # Formål: Lav LP-baseret vagtplanlægning ud fra scenarie-justeret Erlang-output (v2).
-# Input:  <output_base>/v2/erlang/erlang_output_v2.csv
-# Output: <output_base>/v2/staffing/shift_plan_optimized_v2.csv og hourly_coverage_vs_required_v2.csv
+# Input:  <output_base>/Manning/<team>/erlang/erlang_output_v2.csv
+# Output: <output_base>/Manning/<team>/staffing/shift_plan_optimized_v2.csv og hourly_coverage_vs_required_v2.csv
 # Kræver: tidyverse, lubridate, lpSolve
 # ============================================================
 
@@ -18,7 +18,7 @@ source(here("model_functions", "paths.R"))
 # Paths
 # ------------------------------------------------------------
 paths <- get_pipeline_paths()
-base_out_dir <- file.path(paths$output, "baseline_glm")
+base_out_dir <- file.path(paths$output, "Manning")
 dir.create(base_out_dir, recursive = TRUE, showWarnings = FALSE)
 
 # ------------------------------------------------------------
@@ -183,6 +183,7 @@ in_files <- list.files(
   recursive = TRUE,
   full.names = TRUE
 )
+in_files <- in_files[!grepl("/summary/", in_files, fixed = TRUE)]
 
 if (length(in_files) == 0) {
   stop("Ingen erlang_output_v2.csv fundet under: ", base_out_dir)
@@ -190,6 +191,10 @@ if (length(in_files) == 0) {
 
 for (in_path in in_files) {
   team_name <- basename(dirname(dirname(in_path)))
+  if (team_name == "Team SE total") {
+    message("Springer over staffing for Team SE total.")
+    next
+  }
   erlang_results <- read_csv(in_path, show_col_types = FALSE)
   if ("team" %in% names(erlang_results)) {
     erlang_results <- erlang_results %>%

@@ -9,6 +9,7 @@ library(tidyverse)
 library(lubridate)
 library(here)
 library(MASS)
+library(jsonlite)
 
 source(here("model_functions", "paths.R"))
 
@@ -29,10 +30,31 @@ dir.create(file.path(paths$results, "final", "glm"), recursive = TRUE, showWarni
 # ------------------------------------------------------------
 df_base <- readRDS(ts_baseline_path)
 
-train_cutoff <- ymd("2024-12-31")
+cfg <- fromJSON(here("config", "forecast_v2.json"))
+tz_info <- if (!is.null(cfg$timezone) && nzchar(cfg$timezone)) cfg$timezone else "UTC"
+eval_cfg <- if (!is.null(cfg$evaluation)) cfg$evaluation else list()
+
+test_start_val <- if (!is.null(eval_cfg$test_start) && nzchar(eval_cfg$test_start)) {
+  eval_cfg$test_start
+} else {
+  "2025-01-01 00:00:00"
+}
+test_end_val <- if (!is.null(eval_cfg$test_end) && nzchar(eval_cfg$test_end)) {
+  eval_cfg$test_end
+} else {
+  ""
+}
+
+test_start_dt <- ymd_hms(test_start_val, tz = tz_info)
+test_end_dt <- ymd_hms(test_end_val, tz = tz_info)
+if (is.na(test_end_dt)) {
+  test_end_dt <- max(df_base$ds)
+}
+
+train_cutoff <- as.Date(test_start_dt)
 
 df_train_base <- df_base %>% filter(ds < train_cutoff)
-df_test_base  <- df_base %>% filter(ds >= ymd("2025-01-01"))
+df_test_base  <- df_base %>% filter(ds >= test_start_dt, ds <= test_end_dt)
 
 teams <- unique(df_base$team)
 models_out <- list()

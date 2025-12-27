@@ -2,7 +2,7 @@
 # 19_export_erlang_input_v2.R
 # ------------------------------------------------------------
 # Formål: eksportér volumen til Erlang C fra scenarie-justerede forecasts.
-# Output: <output_base>/v2/erlang/erlang_input_v2.csv med team, ds, volume (= y_hat).
+# Output: <output_base>/Manning/<team>/erlang/erlang_input_v2.csv med team, ds, volume (= y_hat).
 # ============================================================
 
 library(tidyverse)
@@ -26,7 +26,7 @@ forecast_start <- ymd_hms(op_cfg$forecast_start, tz = tz_info)
 forecast_end   <- ymd_hms(op_cfg$forecast_end,   tz = tz_info)
 
 paths <- get_pipeline_paths()
-base_out_dir <- file.path(paths$output, "baseline_glm")
+base_out_dir <- file.path(paths$output, "Manning")
 dir.create(base_out_dir, recursive = TRUE, showWarnings = FALSE)
 scen_by_team_dir <- file.path(paths$results, "v2", "scenarios", "by_team")
 
@@ -71,6 +71,10 @@ for (fc_path in fc_files) {
   team_name <- unique(fc$team)
   if (length(team_name) != 1) {
     warning("Forventer præcis ét team i ", fc_path, ". Springer over.")
+    next
+  }
+  if (team_name == "Team SE total") {
+    message("Springer over Erlang input for Team SE total.")
     next
   }
   

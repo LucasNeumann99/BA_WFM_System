@@ -20,14 +20,14 @@ Denne mappe er **den officielle BA-projektmappe**. `main` er stabil; `glm` bruge
 ### Endelig modelvalg (branch `glm`)
 - Forecasts: `<results_base>/final/glm/fc_final_glm_negbin.rds`
 - Metrics (samlet): `<results_base>/final/glm/metrics_final_glm.rds`
-- Plots: `figures/final/glm/<team>/`
+- Plots: `<output_base>/baseline_glm/<team>/diagnostics/`
 
-### Aktiv v2 pipeline (baseline for alle teams)
+### Aktiv v2 pipeline (operative model)
 - Operational forecast bruger kun baseline (ingen lag/rekursion) for alle teams.
-- Output pr. team: `<output_base>/baseline_glm/<team>/`
-  - diagnostics: `.../diagnostics/metrics_final_glm.csv` + `model_summary_final_glm.csv`
-  - erlang: `.../erlang/erlang_input_v2.csv` + `erlang_output_v2.csv`
-  - staffing: `.../staffing/shift_plan_optimized_v2.csv` + `hourly_coverage_vs_required_v2.csv`
+- Output pr. team:
+  - diagnostics: `<output_base>/diagnostics/<team>/`
+  - erlang: `<output_base>/capacity/erlang/<team>/`
+  - staffing: `<output_base>/capacity/staffing/<team>/`
 
 ### Aktiv GLM-model (main)
 - Default er de endelige GLM NegBin-modeller (mix af lag/baseline) fra ovenstående valg.
@@ -44,7 +44,7 @@ Denne mappe er **den officielle BA-projektmappe**. `main` er stabil; `glm` bruge
 ## Output paths
 - Output og artefakter gemmes uden for repoet (CSV/PNG/RDS).
 - Justeres i `config/paths.json`:
-  - `output_base` (fx `../../BA_WFM_Output/output`)
+  - `output_base` (fx `../../BA_WFM_Output`)
   - `results_base` (fx `results`)
 
 ## Artefakter & versionering
@@ -58,7 +58,8 @@ Denne mappe er **den officielle BA-projektmappe**. `main` er stabil; `glm` bruge
 - models/                  → Trænede modeller
 - model_functions/         → FE, modelling, LP, Erlang
 - pipeline/                → Scripts der kører workflowet
+- analysis_extra/          → Ad hoc analyse-scripts (skriver til `<output_base>/analysis_extra/`)
 - shiny_app/               → Shiny-dashboard
-- <output_base>/baseline_glm/<team>/diagnostics/ → Team-metrics og modelsummary
-- <output_base>/baseline_glm/<team>/erlang/      → Erlang input/output pr. team
-- <output_base>/baseline_glm/<team>/staffing/    → Optimerede bemandingsplaner pr. team
+- <output_base>/diagnostics/<team>/ → Operative metrics/plots pr. team
+- <output_base>/capacity/erlang/<team>/ → Erlang input/output pr. team
+- <output_base>/capacity/staffing/<team>/ → Optimerede bemandingsplaner pr. team

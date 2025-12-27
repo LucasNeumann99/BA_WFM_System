@@ -11,8 +11,10 @@ library(lubridate)
 library(here)
 library(MASS)
 library(jsonlite)
+library(broom)
 
 source(here("model_functions", "paths.R"))
+source(here("model_functions", "se_total.R"))
 
 cfg <- fromJSON(here("config", "forecast_v2.json"))
 tz_info <- cfg$timezone %||% "UTC"
@@ -165,6 +167,7 @@ forecast_baseline <- function(team, model, horizon_df, train_levels) {
 # Kør for alle teams
 # ------------------------------------------------------------
 fc_list <- list()
+models_out <- list()
 run_id_val <- format(Sys.time(), "%Y%m%dT%H%M%S", tz = tz_info)
 gen_ts <- Sys.time()
 
@@ -213,6 +216,8 @@ for (tm in unique(df_base$team)) {
     fc_tm <- forecast_baseline(tm, model, horizon_df, levels_list)
   }
   
+  models_out[[tm]] <- model
+  
   fc_tm <- fc_tm %>%
     mutate(
       generated_at = gen_ts,
@@ -223,9 +228,42 @@ for (tm in unique(df_base$team)) {
 }
 
 fc_operational <- bind_rows(fc_list)
+fc_operational <- build_se_total(fc_operational)
 combined_path <- file.path(results_base_dir, "fc_operational_raw_v2.rds")
 saveRDS(fc_operational, combined_path)
 message("✔ Operational rå forecast gemt: ", combined_path)
+
+capacity_path <- file.path(results_base_dir, "fc_operational_capacity_v2.rds")
+saveRDS(fc_operational, capacity_path)
+message("✔ Operational capacity forecast gemt: ", capacity_path)
+
+# ------------------------------------------------------------
+# Model summaries (operative)
+# ------------------------------------------------------------
+model_summary <- imap_dfr(
+  models_out,
+  ~ broom::tidy(.x) %>%
+    mutate(
+      term = stringr::str_replace(term, "(TRUE|FALSE)$", ""),
+      team = .y
+    )
+)
+
+base_out_dir <- file.path(paths$output, "diagnostics")
+dir.create(base_out_dir, recursive = TRUE, showWarnings = FALSE)
+readr::write_csv(
+  model_summary,
+  file.path(base_out_dir, "Total_Travelcare", "model_summary_operational.csv")
+)
+
+walk(unique(model_summary$team), function(tm) {
+  out_dir <- file.path(base_out_dir, tm)
+  dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+  readr::write_csv(
+    filter(model_summary, team == tm),
+    file.path(out_dir, "model_summary_operational.csv")
+  )
+})
 
 walk(unique(fc_operational$team), function(tm) {
   out_dir <- file.path(by_team_dir, tm)

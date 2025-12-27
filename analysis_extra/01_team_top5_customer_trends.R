@@ -10,13 +10,14 @@
 #
 # Output:
 # - 5 PNG-filer (én pr. team) i:
-#   figures/analysis_extra/team_top5/
+#   <output_base>/analysis_extra/team_top5/
 # ============================================================
 
 library(tidyverse)
 library(lubridate)
 library(here)
 
+source(here("model_functions", "paths.R"))
 # ------------------------------------------------------------
 # 1) Læs data
 # ------------------------------------------------------------
@@ -57,7 +58,11 @@ cust_colors <- c(
 # ------------------------------------------------------------
 # 3) Output-mappe
 # ------------------------------------------------------------
-fig_dir <- here("figures", "analysis_extra", "team_top5")
+fig_dir <- file.path(
+  get_pipeline_paths()$output,
+  "analysis_extra",
+  "team_top5"
+)
 dir.create(fig_dir, recursive = TRUE, showWarnings = FALSE)
 
 # ------------------------------------------------------------

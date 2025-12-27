@@ -5,8 +5,8 @@
 # Formål: Beregn bemandingsbehov med en ren Python Erlang C-implementering.
 # Ingen afhængighed til pyworkforce. Numerisk stabilitet via lgamma + log-sum-exp
 # i stedet for factorial, så vi undgår overflow for store n.
-# Input:  <output_base>/v2/erlang/erlang_input_v2.csv
-# Output: <output_base>/v2/erlang/erlang_output_v2.csv
+# Input:  <output_base>/Manning/<team>/erlang/erlang_input_v2.csv
+# Output: <output_base>/Manning/<team>/erlang/erlang_output_v2.csv
 # Køres med: python pipeline/20_erlang_c_v2.py
 # ============================================================
 
@@ -33,7 +33,7 @@ def _load_paths():
 
 
 OUTPUT_BASE, RESULTS_BASE = _load_paths()
-BASELINE_DIR = OUTPUT_BASE / "baseline_glm"
+BASELINE_DIR = OUTPUT_BASE / "Manning"
 INTERVAL_SECONDS = 3600  # antager 1 times intervaller
 MAX_AGENTS = 200
 
@@ -170,6 +170,7 @@ def main():
         sys.exit(1)
 
     input_files = sorted(BASELINE_DIR.glob("*/erlang/erlang_input_v2.csv"))
+    input_files = [p for p in input_files if "Team SE total" not in str(p)]
     if not input_files:
         sys.stderr.write(f"Ingen input CSV fundet i: {BASELINE_DIR}\n")
         sys.exit(1)

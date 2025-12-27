@@ -8,14 +8,15 @@
 #
 # Output:
 # - Konsol-print af kandidater
-# - CSV: figures/analysis_extra/team_no_customer_shift_candidates.csv
-# - Plots: figures/analysis_extra/*.png (kun ved interaktiv kørsel)
+# - CSV: <output_base>/analysis_extra/team_no_customer_shift_candidates.csv
+# - Plots: <output_base>/analysis_extra/*.png (kun ved interaktiv kørsel)
 # ============================================================
 
 library(tidyverse)
 library(lubridate)
 library(here)
 
+source(here("model_functions", "paths.R"))
 
 # ------------------------------------------------------------
 # 1) Læs data og filtrér til Team NO
@@ -177,7 +178,10 @@ if (interactive() && nrow(store_monthly_by_year) > 0) {
 # ------------------------------------------------------------
 # 7) Gem et lille summary til rapport
 # ------------------------------------------------------------
-diag_dir <- here("figures", "analysis_extra")
+diag_dir <- file.path(
+  get_pipeline_paths()$output,
+  "analysis_extra"
+)
 dir.create(diag_dir, recursive = TRUE, showWarnings = FALSE)
 
 summary_out <- candidates_24_25 %>%

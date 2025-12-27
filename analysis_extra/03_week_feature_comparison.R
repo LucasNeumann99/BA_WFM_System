@@ -8,22 +8,47 @@
 #   - Test:  >= 2025-01-01 til sidste timestamp
 #
 # Output:
-# - CSV: figures/analysis_extra/metrics_week_feature_comparison.csv
+# - CSV: <output_base>/analysis_extra/metrics_week_feature_comparison.csv
 # ============================================================
 
 library(tidyverse)
 library(lubridate)
 library(here)
 library(MASS)
+library(jsonlite)
 
+source(here("model_functions", "paths.R"))
 in_path <- here("data_processed", "ts_hourly_all_teams_struct_adj.rds")
-out_path <- here("figures", "analysis_extra", "metrics_week_feature_comparison.csv")
+out_path <- file.path(
+  get_pipeline_paths()$output,
+  "analysis_extra",
+  "metrics_week_feature_comparison.csv"
+)
 
 df <- readRDS(in_path)
 
-train_end_date <- ymd("2024-12-31")
-test_start_dt  <- ymd_hms("2025-01-01 00:00:00", tz = "UTC")
-test_end_dt    <- max(df$ds)
+cfg <- fromJSON(here("config", "forecast_v2.json"))
+tz_info <- if (!is.null(cfg$timezone) && nzchar(cfg$timezone)) cfg$timezone else "UTC"
+eval_cfg <- if (!is.null(cfg$evaluation)) cfg$evaluation else list()
+
+test_start_val <- if (!is.null(eval_cfg$test_start) && nzchar(eval_cfg$test_start)) {
+  eval_cfg$test_start
+} else {
+  "2025-01-01 00:00:00"
+}
+test_end_val <- if (!is.null(eval_cfg$test_end) && nzchar(eval_cfg$test_end)) {
+  eval_cfg$test_end
+} else {
+  ""
+}
+
+test_start_dt <- ymd_hms(test_start_val, tz = tz_info)
+test_end_dt <- ymd_hms(test_end_val, tz = tz_info)
+if (is.na(test_end_dt)) {
+  test_end_dt <- max(df$ds)
+}
+
+train_end_date <- as.Date(test_start_dt) - days(1)
 year_ref <- 2024
 
 compute_metrics <- function(df) {

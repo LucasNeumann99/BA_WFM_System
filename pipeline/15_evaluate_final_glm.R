@@ -37,7 +37,7 @@ teams <- unique(fc$team)
 # ------------------------------------------------------------
 # Directory setup
 # ------------------------------------------------------------
-metrics_base_dir <- file.path(paths$output, "baseline_glm")
+metrics_base_dir <- file.path(paths$output, "analysis_extra", "final_glm_diagnostics")
 metrics_results_dir <- file.path(paths$results, "final", "glm")
 
 dir.create(metrics_base_dir, recursive = TRUE, showWarnings = FALSE)
@@ -124,6 +124,34 @@ for (tm in teams) {
   )
   
   metrics_all[[tm]] <- m
+}
+
+# ------------------------------------------------------------
+# SE total metrics + plot (agg SE1+SE2)
+# ------------------------------------------------------------
+if (all(c("Team SE 1, Travelcare", "Team SE 2, Travelcare") %in% teams)) {
+  se_df <- fc %>% filter(team %in% c("Team SE 1, Travelcare", "Team SE 2, Travelcare"))
+  se_total <- se_df %>%
+    group_by(ds) %>%
+    summarise(
+      y = sum(y, na.rm = TRUE),
+      y_hat = sum(y_hat, na.rm = TRUE),
+      .groups = "drop"
+    )
+  
+  se_metrics <- compute_metrics(se_total) %>%
+    mutate(team = "Team SE total", model = "AGG_SE1_SE2")
+  
+  metrics_all[["Team SE total"]] <- se_metrics
+  
+  se_metrics_dir <- file.path(paths$results, "final", "glm", "metrics")
+  dir.create(se_metrics_dir, recursive = TRUE, showWarnings = FALSE)
+  readr::write_csv(
+    se_metrics,
+    file.path(se_metrics_dir, "metrics_team_se_total.csv")
+  )
+  
+  # Plot moved to analysis_extra/10_se_total_diagnostics.R (no figures/ outputs)
 }
 
 # ------------------------------------------------------------

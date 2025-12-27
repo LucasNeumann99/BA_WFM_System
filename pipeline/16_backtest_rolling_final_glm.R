@@ -24,12 +24,12 @@ tz_info      <- cfg$timezone %||% "UTC"
 
 paths <- get_pipeline_paths()
 backtest_dir <- file.path(paths$results, "v2", "backtests")
-metrics_base_dir <- file.path(paths$output, "baseline_glm")
+metrics_base_dir <- file.path(paths$output, "diagnostics")
 dir.create(backtest_dir, recursive = TRUE, showWarnings = FALSE)
 dir.create(metrics_base_dir, recursive = TRUE, showWarnings = FALSE)
 
 fc_out_path     <- file.path(backtest_dir, "fc_backtest_rolling.rds")
-metrics_out_path<- file.path(metrics_base_dir, "metrics_backtest_rolling.csv")
+metrics_out_path<- file.path(metrics_base_dir, "Total_Travelcare", "metrics_backtest_rolling.csv")
 
 # ------------------------------------------------------------
 # Data og teams
@@ -209,7 +209,7 @@ metrics <- fc_backtest %>%
 write_csv(metrics, metrics_out_path)
 
 walk(unique(metrics$team), function(tm) {
-  out_dir <- file.path(metrics_base_dir, tm, "diagnostics")
+  out_dir <- file.path(metrics_base_dir, tm)
   dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
   write_csv(
     filter(metrics, team == tm),
