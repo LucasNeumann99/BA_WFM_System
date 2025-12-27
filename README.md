@@ -19,15 +19,17 @@ Denne mappe er **den officielle BA-projektmappe**. `main` er stabil; `glm` bruge
 
 ### Endelig modelvalg (branch `glm`)
 - Forecasts: `<results_base>/final/glm/fc_final_glm_negbin.rds`
-- Metrics (samlet): `<results_base>/final/glm/metrics_final_glm.rds`
-- Plots: `<output_base>/baseline_glm/<team>/diagnostics/`
+- Metrics (RDS): `<results_base>/final/glm/metrics_final_glm.rds`
+- Diagnostics (CSV/plots): `<output_base>/analysis_extra/final_glm_diagnostics/<team>/diagnostics/`
 
 ### Aktiv v2 pipeline (operative model)
 - Operational forecast bruger kun baseline (ingen lag/rekursion) for alle teams.
 - Output pr. team:
   - diagnostics: `<output_base>/diagnostics/<team>/`
-  - erlang: `<output_base>/capacity/erlang/<team>/`
-  - staffing: `<output_base>/capacity/staffing/<team>/`
+  - erlang: `<output_base>/Manning/<team>/erlang/`
+  - staffing: `<output_base>/Manning/<team>/staffing/`
+- Samlede operative metrics/summary:
+  - `<output_base>/diagnostics/Total_Travelcare/`
 
 ### Aktiv GLM-model (main)
 - Default er de endelige GLM NegBin-modeller (mix af lag/baseline) fra ovenstående valg.
@@ -48,7 +50,7 @@ Denne mappe er **den officielle BA-projektmappe**. `main` er stabil; `glm` bruge
   - `results_base` (fx `results`)
 
 ## Artefakter & versionering
-- `figures/`, `results/`, `output/` er **ikke versioneret**.
+- `results/` og eksterne outputs (fx `BA_WFM_Output/`) er **ikke versioneret**.
 - Kun scripts, konfiguration og kode ligger i git.
 - Kør pipelines for at regenerere plots/metrics lokalt.
 
@@ -61,5 +63,7 @@ Denne mappe er **den officielle BA-projektmappe**. `main` er stabil; `glm` bruge
 - analysis_extra/          → Ad hoc analyse-scripts (skriver til `<output_base>/analysis_extra/`)
 - shiny_app/               → Shiny-dashboard
 - <output_base>/diagnostics/<team>/ → Operative metrics/plots pr. team
-- <output_base>/capacity/erlang/<team>/ → Erlang input/output pr. team
-- <output_base>/capacity/staffing/<team>/ → Optimerede bemandingsplaner pr. team
+- <output_base>/diagnostics/Total_Travelcare/ → Samlede operative metrics + model summary
+- <output_base>/Manning/<team>/erlang/ → Erlang input/output pr. team
+- <output_base>/Manning/<team>/staffing/ → Optimerede bemandingsplaner pr. team
+- <output_base>/Manning/extra_analytics/ → Shrinkage‑oversigter + AHT‑summary
