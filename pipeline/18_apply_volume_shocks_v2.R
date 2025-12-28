@@ -57,7 +57,9 @@ if (!"y_hat_raw" %in% names(fc)) {
 }
 
 if (!all(c("p_se1", "p_se2") %in% names(fc))) {
-  fc <- build_se_total(fc)
+  df_base <- readRDS(here("data_processed", "ts_hourly_all_teams_struct_adj.rds"))
+  share_vals <- se_actual_share(df_base, min(fc$ds, na.rm = TRUE), n_months = 6)
+  fc <- ensure_se_share_cols(fc, share_vals$p_se1, share_vals$p_se2)
 }
 
 fc <- fc %>%

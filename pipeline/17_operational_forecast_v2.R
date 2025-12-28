@@ -43,6 +43,8 @@ df_future <- readRDS(here("data_processed", "ts_future_all_teams_features.rds"))
 #   "Team SE 1, Travelcare"
 # )
 teams_use_lags <- character(0)
+se_teams <- c("Team SE 1, Travelcare", "Team SE 2, Travelcare")
+se_total_team <- "Team SE total"
 
 # ------------------------------------------------------------
 # Helper: train baseline model
@@ -155,7 +157,7 @@ forecast_baseline <- function(team, model, horizon_df, train_levels) {
       year_c  = as.numeric(year) - 2024
     ) %>%
     transmute(
-      team = team,
+      team = .env$team,
       ds   = ds,
       y_hat_raw = predict(model, newdata = ., type = "response"),
       model_used = "GLM_NegBin_baseline",
@@ -227,8 +229,81 @@ for (tm in unique(df_base$team)) {
   fc_list[[length(fc_list) + 1]] <- fc_tm
 }
 
+# ------------------------------------------------------------
+# SE total model + split med actuals-share (rullende 6 mdr)
+# ------------------------------------------------------------
 fc_operational <- bind_rows(fc_list)
-fc_operational <- build_se_total(fc_operational)
+
+se_hist <- df_base %>%
+  filter(team %in% se_teams, ds < forecast_start) %>%
+  group_by(ds) %>%
+  summarise(
+    y = sum(y, na.rm = TRUE),
+    hour = first(hour),
+    weekday = first(weekday),
+    month = first(month),
+    year = first(year),
+    Juleferie = first(Juleferie),
+    Vinterferie = first(Vinterferie),
+    Påskeferie = first(Påskeferie),
+    Sommerferie = first(Sommerferie),
+    Efterårsferie = first(Efterårsferie),
+    .groups = "drop"
+  )
+
+se_future <- df_future %>%
+  filter(team == se_teams[1], ds >= forecast_start, ds <= forecast_end)
+
+if (nrow(se_future) == 0) {
+  se_future <- df_base %>%
+    filter(team == se_teams[1], ds >= forecast_start, ds <= forecast_end)
+}
+
+if (nrow(se_hist) > 0 && nrow(se_future) > 0) {
+  se_hist_levels <- se_hist %>%
+    mutate(
+      hour    = factor(hour),
+      weekday = factor(weekday, ordered = FALSE),
+      month   = factor(month)
+    ) %>%
+    droplevels()
+  
+  se_model <- train_baseline(se_total_team, se_hist_levels)
+  se_levels <- list(
+    hour    = levels(se_hist_levels$hour),
+    weekday = levels(se_hist_levels$weekday),
+    month   = levels(se_hist_levels$month)
+  )
+  
+  fc_total <- forecast_baseline(se_total_team, se_model, se_future, se_levels) %>%
+    mutate(model_used = "GLM_NegBin_SE_total")
+  
+  share_vals <- se_actual_share(df_base, forecast_start, n_months = 6)
+  p_se1 <- share_vals$p_se1
+  p_se2 <- share_vals$p_se2
+  
+  fc_total <- fc_total %>%
+    mutate(p_se1 = p_se1, p_se2 = p_se2)
+  
+  se1_fc <- fc_total %>%
+    mutate(
+      team = se_teams[1],
+      y_hat_raw = y_hat_raw * p_se1,
+      model_used = "GLM_NegBin_SE_total_split"
+    )
+  
+  se2_fc <- fc_total %>%
+    mutate(
+      team = se_teams[2],
+      y_hat_raw = y_hat_raw * p_se2,
+      model_used = "GLM_NegBin_SE_total_split"
+    )
+  
+  models_out[[se_total_team]] <- se_model
+  
+  other <- fc_operational %>% filter(!team %in% se_teams)
+  fc_operational <- bind_rows(other, se1_fc, se2_fc, fc_total)
+}
 combined_path <- file.path(results_base_dir, "fc_operational_raw_v2.rds")
 saveRDS(fc_operational, combined_path)
 message("✔ Operational rå forecast gemt: ", combined_path)
@@ -256,7 +331,22 @@ readr::write_csv(
   file.path(base_out_dir, "Total_Travelcare", "model_summary_operational.csv")
 )
 
-walk(unique(model_summary$team), function(tm) {
+if (se_total_team %in% model_summary$team) {
+  se_total_dir <- file.path(base_out_dir, se_total_team)
+  dir.create(se_total_dir, recursive = TRUE, showWarnings = FALSE)
+  readr::write_csv(
+    filter(model_summary, team == se_total_team),
+    file.path(se_total_dir, "model_summary_operational.csv")
+  )
+}
+
+per_team_summaries <- c(
+  "Team DK 1, Travelcare",
+  "Team FI 1, Travelcare",
+  "Team NO 1, Travelcare"
+)
+
+walk(intersect(per_team_summaries, unique(model_summary$team)), function(tm) {
   out_dir <- file.path(base_out_dir, tm)
   dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
   readr::write_csv(

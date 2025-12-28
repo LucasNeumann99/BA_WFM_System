@@ -24,6 +24,9 @@ Denne mappe er **den officielle BA-projektmappe**. `main` er stabil; `glm` bruge
 
 ### Aktiv v2 pipeline (operative model)
 - Operational forecast bruger kun baseline (ingen lag/rekursion) for alle teams.
+- Sverige:
+  - SE_total trænes som én model og bruges til trend/seasonality.
+  - SE1/SE2 splittes ud fra SE_total via actuals-share (rullende 6 mdr).
 - Output pr. team:
   - diagnostics: `<output_base>/diagnostics/<team>/`
   - erlang: `<output_base>/Manning/<team>/erlang/`
@@ -67,3 +70,5 @@ Denne mappe er **den officielle BA-projektmappe**. `main` er stabil; `glm` bruge
 - <output_base>/Manning/<team>/erlang/ → Erlang input/output pr. team
 - <output_base>/Manning/<team>/staffing/ → Optimerede bemandingsplaner pr. team
 - <output_base>/Manning/extra_analytics/ → Shrinkage‑oversigter + AHT‑summary
+- <output_base>/analysis_extra/model_story/ → Bias + annual trend + month/holiday effekter (5 teams)
+- <output_base>/analysis_extra/Y_præsentation/ → Figurer til rapportering
