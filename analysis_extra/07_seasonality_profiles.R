@@ -38,7 +38,8 @@ team_colors <- c(
   "Team SE 1, Travelcare" = "#3E3E3E",
   "Team SE 2, Travelcare" = "#2E9A5D",
   "Team NO 1, Travelcare" = "#2A6F97",
-  "Team FI 1, Travelcare" = "#8E5C9E"
+  "Team FI 1, Travelcare" = "#8E5C9E",
+  "External key" = "#E3B23C"
 )
 
 build_profile <- function(mod, team, feature) {
@@ -96,6 +97,33 @@ profiles <- map_dfr(
     )
   }
 )
+
+external_weekday_path <- here("analysis_extra", "weekday_external_key.csv")
+if (file.exists(external_weekday_path)) {
+  weekday_map <- c(
+    "mandag" = "Mon",
+    "tirsdag" = "Tue",
+    "onsdag" = "Wed",
+    "torsdag" = "Thu",
+    "fredag" = "Fri",
+    "lørdag" = "Sat",
+    "søndag" = "Sun"
+  )
+  
+  external_weekday <- read_csv(external_weekday_path, show_col_types = FALSE) %>%
+    transmute(
+      team = "External key",
+      feature = "weekday",
+      index = tolower(weekday),
+      index_value = as.numeric(index_value)
+    ) %>%
+    mutate(index = recode(index, !!!weekday_map)) %>%
+    filter(!is.na(index))
+  
+  if (nrow(external_weekday) > 0) {
+    profiles <- bind_rows(profiles, external_weekday)
+  }
+}
 
 write_csv(profiles, file.path(out_dir, "seasonality_profiles.csv"))
 
@@ -195,7 +223,7 @@ p_weekday_facet <- ggplot(weekday_df, aes(weekday, index_value, group = 1)) +
   facet_wrap(~ team, scales = "free_y") +
   scale_y_continuous(labels = number_format(accuracy = 0.01)) +
   labs(
-    title = "Ugedagseffekt pr. team (normaliseret)",
+    title = "Ugedagseffekt pr. team (normaliseret) - external key afviger fra modeltrend",
     x = "Ugedag",
     y = "Indeks (mu / mean)"
   ) +
