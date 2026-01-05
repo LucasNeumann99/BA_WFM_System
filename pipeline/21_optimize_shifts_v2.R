@@ -26,8 +26,9 @@ dir.create(base_out_dir, recursive = TRUE, showWarnings = FALSE)
 # ------------------------------------------------------------
 prepare_staffing <- function(erlang_results,
                              use_shrinkage = TRUE,
-                             hour_min = 7,
-                             hour_max = 23) {
+                             hour_min = 0,
+                             hour_max = 24,
+                             night_hours = c(22, 23, 0, 1, 2, 3, 4)) {
   
   required_col <- if (use_shrinkage && "agents_with_shrinkage" %in% names(erlang_results)) {
     "agents_with_shrinkage"
@@ -46,25 +47,51 @@ prepare_staffing <- function(erlang_results,
       weekday    = wday(ds, label = TRUE, week_start = 1),
       required   = .data[[required_col]]
     ) %>%
-    filter(hour >= hour_min, hour < hour_max)
+    filter(hour >= hour_min, hour < hour_max) %>%
+    mutate(
+      required = if_else(hour %in% night_hours, 1, required)
+    )
 }
 
 build_shift_catalog <- function(staffing_df,
-                                shift_starts = 7:15,
-                                shift_length = 8) {
+                                shift_starts = 5:15,
+                                shift_length = 8,
+                                night_start = 22,
+                                night_length = 9) {
   all_staff_dates <- sort(unique(staffing_df$staff_date))
   
-  purrr::map_dfr(
+  shift_catalog <- purrr::map_dfr(
     all_staff_dates,
     function(d) {
-      tibble(
+      day_shifts <- tibble(
         staff_date = d,
         shift_id   = paste0("D", d, "_", shift_starts),
         start_hour = shift_starts,
         end_hour   = shift_starts + shift_length
       )
+      night_shift <- tibble(
+        staff_date = d,
+        shift_id   = paste0("N", d, "_", night_start),
+        start_hour = night_start,
+        end_hour   = night_start + night_length
+      )
+      bind_rows(day_shifts, night_shift)
     }
   )
+  
+  # Add a night shift for the day before the first date to cover early hours
+  if (length(all_staff_dates) > 0) {
+    first_day <- min(all_staff_dates)
+    pre_night <- tibble(
+      staff_date = first_day - days(1),
+      shift_id   = paste0("N", first_day - days(1), "_", night_start),
+      start_hour = night_start,
+      end_hour   = night_start + night_length
+    )
+    shift_catalog <- bind_rows(shift_catalog, pre_night)
+  }
+  
+  shift_catalog
 }
 
 build_lp_matrix <- function(staffing_df, shift_catalog) {
@@ -72,11 +99,26 @@ build_lp_matrix <- function(staffing_df, shift_catalog) {
     arrange(staff_date, hour) %>%
     mutate(row_id = row_number())
   
-  coverage <- time_slots %>%
-    select(staff_date, hour, row_id) %>%
-    inner_join(shift_catalog, by = "staff_date", relationship = "many-to-many") %>%
-    mutate(covers = if_else(hour >= start_hour & hour < end_hour, 1L, 0L)) %>%
-    filter(covers == 1L)
+  day_part <- shift_catalog %>%
+    mutate(
+      cover_date = staff_date,
+      start_cover = start_hour,
+      end_cover = pmin(end_hour, 24)
+    )
+  
+  night_part <- shift_catalog %>%
+    filter(end_hour > 24) %>%
+    mutate(
+      cover_date = staff_date + days(1),
+      start_cover = 0,
+      end_cover = end_hour - 24
+    )
+  
+  coverage <- bind_rows(day_part, night_part) %>%
+    inner_join(time_slots, by = c("cover_date" = "staff_date"), relationship = "many-to-many") %>%
+    mutate(covers = hour >= start_cover & hour < end_cover) %>%
+    filter(covers) %>%
+    mutate(covers = 1L)
   
   n_rows   <- nrow(time_slots)
   n_shifts <- nrow(shift_catalog)
@@ -97,10 +139,19 @@ build_lp_matrix <- function(staffing_df, shift_catalog) {
 
 solve_shift_lp <- function(staffing_df,
                            team_name = NULL,
-                           shift_starts = 7:15,
-                           shift_length = 8) {
+                           shift_starts = 5:15,
+                           shift_length = 8,
+                           night_start = 22,
+                           night_length = 9,
+                           night_strict_hours = c(23, 0, 1, 2, 3, 4)) {
   
-  shift_catalog <- build_shift_catalog(staffing_df, shift_starts, shift_length)
+  shift_catalog <- build_shift_catalog(
+    staffing_df,
+    shift_starts = shift_starts,
+    shift_length = shift_length,
+    night_start = night_start,
+    night_length = night_length
+  )
   lp_struct <- build_lp_matrix(staffing_df, shift_catalog)
   
   A          <- lp_struct$A
@@ -113,17 +164,30 @@ solve_shift_lp <- function(staffing_df,
   
   # Enkelt cost-funktion; kan vægtes efter ønsker
   shift_cost <- case_when(
+    shift_cat$start_hour == night_start ~ 300,
     shift_cat$start_hour <= 7 ~ 100,
     shift_cat$end_hour >= 18 ~ 100,
     TRUE ~ 1
   )
+
+  # Add strict night constraints (exactly 1 between 23-05)
+  night_rows <- time_slots$row_id[time_slots$hour %in% night_strict_hours]
+  if (length(night_rows) > 0) {
+    A_night <- A[night_rows, , drop = FALSE]
+    A <- rbind(A, A_night, A_night)
+    const_dir <- c(rep(">=", length(rhs)), rep("<=", length(night_rows)), rep(">=", length(night_rows)))
+    const_rhs <- c(rhs, rep(1, length(night_rows)), rep(1, length(night_rows)))
+  } else {
+    const_dir <- rep(">=", length(rhs))
+    const_rhs <- rhs
+  }
   
   lp_sol <- lpSolve::lp(
     direction    = "min",
     objective.in = shift_cost,
     const.mat    = A,
-    const.dir    = rep(">=", length(rhs)),
-    const.rhs    = rhs,
+    const.dir    = const_dir,
+    const.rhs    = const_rhs,
     all.int      = TRUE
   )
   
@@ -145,20 +209,36 @@ solve_shift_lp <- function(staffing_df,
       mutate(team = team_name)
   }
   
-  coverage <- time_slots %>%
-    select(staff_date, hour, row_id) %>%
-    inner_join(shift_cat %>% mutate(col_id = row_number()),
-               by = "staff_date",
+  day_part <- shift_cat %>%
+    mutate(
+      cover_date = staff_date,
+      start_cover = start_hour,
+      end_cover = pmin(end_hour, 24)
+    )
+  
+  night_part <- shift_cat %>%
+    filter(end_hour > 24) %>%
+    mutate(
+      cover_date = staff_date + days(1),
+      start_cover = 0,
+      end_cover = end_hour - 24
+    )
+  
+  coverage <- bind_rows(day_part, night_part) %>%
+    inner_join(time_slots %>% select(staff_date, hour),
+               by = c("cover_date" = "staff_date"),
                relationship = "many-to-many") %>%
-    mutate(covers = if_else(hour >= start_hour & hour < end_hour, 1L, 0L)) %>%
+    mutate(covers = if_else(hour >= start_cover & hour < end_cover, 1L, 0L)) %>%
+    filter(covers == 1L) %>%
     left_join(shift_plan,
               by = c("staff_date", "shift_id", "start_hour", "end_hour")) %>%
     mutate(agents = if_else(is.na(agents), 0L, agents)) %>%
-    group_by(staff_date, hour) %>%
+    group_by(cover_date, hour) %>%
     summarise(
-      staffed_agents = sum(agents * covers),
+      staffed_agents = sum(agents),
       .groups = "drop"
     ) %>%
+    rename(staff_date = cover_date) %>%
     left_join(staffing_df, by = c("staff_date", "hour")) %>%
     arrange(staff_date, hour)
   
@@ -207,6 +287,12 @@ for (in_path in in_files) {
   shift_plan <- solution$shift_plan %>%
     select(-shift_id)
   
+  shift_plan_out <- shift_plan %>%
+    mutate(
+      end_date = if_else(end_hour > 24, staff_date + days(1), staff_date),
+      end_hour = if_else(end_hour > 24, end_hour - 24, end_hour)
+    )
+  
   hourly_cover <- solution$hourly_cover
   
   out_dir  <- file.path(base_out_dir, team_name, "staffing")
@@ -214,7 +300,7 @@ for (in_path in in_files) {
   out_plan <- file.path(out_dir, "shift_plan_optimized_v2.csv")
   out_cov  <- file.path(out_dir, "hourly_coverage_vs_required_v2.csv")
   
-  write_csv(shift_plan, out_plan)
+  write_csv(shift_plan_out, out_plan)
   write_csv(hourly_cover, out_cov)
   
   message("✔ Shift plan gemt: ", out_plan)

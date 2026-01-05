@@ -57,9 +57,8 @@ if (!"y_hat_raw" %in% names(fc)) {
 }
 
 if (!all(c("p_se1", "p_se2") %in% names(fc))) {
-  df_base <- readRDS(here("data_processed", "ts_hourly_all_teams_struct_adj.rds"))
-  share_vals <- se_actual_share(df_base, min(fc$ds, na.rm = TRUE), n_months = 6)
-  fc <- ensure_se_share_cols(fc, share_vals$p_se1, share_vals$p_se2)
+  # Fixed 50/50 split between SE1 and SE2 (policy decision)
+  fc <- ensure_se_share_cols(fc, 0.5, 0.5)
 }
 
 fc <- fc %>%

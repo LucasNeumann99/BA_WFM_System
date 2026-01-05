@@ -116,6 +116,17 @@ metrics_compare <- glm_metrics %>%
 
 readr::write_csv(metrics_compare, file.path(out_dir, "metrics_prophet_vs_glm.csv"))
 
+prophet_wins <- sum(metrics_compare$delta_RMSE < 0, na.rm = TRUE)
+glm_wins <- sum(metrics_compare$delta_RMSE > 0, na.rm = TRUE)
+
+rmse_title <- if (prophet_wins > glm_wins) {
+  paste0("Prophet vinder RMSE for ", prophet_wins, " af ", prophet_wins + glm_wins, " teams")
+} else if (glm_wins > prophet_wins) {
+  paste0("GLM vinder RMSE for ", glm_wins, " af ", prophet_wins + glm_wins, " teams")
+} else {
+  "RMSE er delt mellem Prophet og GLM"
+}
+
 plot_metrics <- metrics_compare %>%
   mutate(team = fct_reorder(team, delta_RMSE)) %>%
   ggplot(aes(x = team, y = delta_RMSE, fill = team)) +
@@ -124,7 +135,7 @@ plot_metrics <- metrics_compare %>%
   coord_flip() +
   theme_minimal() +
   labs(
-    title = "Prophet vs GLM - Delta RMSE (Prophet - GLM)",
+    title = rmse_title,
     x = "Team",
     y = "Delta RMSE"
   )
@@ -225,10 +236,11 @@ trend_plot <- trend_compare %>%
   mutate(team = fct_reorder(team, annual_trend_pct)) %>%
   ggplot(aes(x = team, y = annual_trend_pct, fill = source)) +
   geom_col(position = position_dodge(width = 0.7)) +
+  scale_fill_manual(values = c("GLM" = "#3E3E3E", "Prophet" = "#D93945")) +
   coord_flip() +
   theme_minimal() +
   labs(
-    title = "Annual Trend - Prophet vs GLM",
+    title = "Årlig trend: Prophet vs GLM",
     x = "Team",
     y = "Annual trend (%)",
     fill = ""

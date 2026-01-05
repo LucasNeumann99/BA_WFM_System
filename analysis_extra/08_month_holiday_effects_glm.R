@@ -19,7 +19,7 @@ library(scales)
 source(here("model_functions", "paths.R"))
 
 paths <- get_pipeline_paths()
-out_dir <- file.path(paths$output, "analysis_extra", "month_holiday_effects")
+out_dir <- file.path(paths$output, "analysis_extra", "seasonality_profiles", "holiday")
 dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 
 models <- readRDS(here("models", "final_glm_negbin_by_team.rds"))
@@ -127,7 +127,7 @@ p_holiday <- ggplot(holiday_df, aes(level, effect, fill = team)) +
   scale_fill_manual(values = team_colors) +
   scale_y_continuous(labels = number_format(accuracy = 0.01)) +
   labs(
-    title = "Ferieeffekter (exp(β)) pr. team",
+    title = "Ferieeffekter pr. team – ferieuger løfter volumen",
     subtitle = "Effekt > 1 = højere volumen, < 1 = lavere volumen",
     x = NULL,
     y = "Multiplikativ effekt",

@@ -278,7 +278,8 @@ if (nrow(se_hist) > 0 && nrow(se_future) > 0) {
   fc_total <- forecast_baseline(se_total_team, se_model, se_future, se_levels) %>%
     mutate(model_used = "GLM_NegBin_SE_total")
   
-  share_vals <- se_actual_share(df_base, forecast_start, n_months = 6)
+  # Fixed 50/50 split between SE1 and SE2 (policy decision)
+  share_vals <- list(p_se1 = 0.5, p_se2 = 0.5)
   p_se1 <- share_vals$p_se1
   p_se2 <- share_vals$p_se2
   
