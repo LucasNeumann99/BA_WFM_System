@@ -23,6 +23,13 @@ paths <- get_pipeline_paths()
 out_dir <- file.path(paths$output, "analysis_extra", "seasonality_profiles")
 dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 
+month_dir <- file.path(out_dir, "month")
+weekday_dir <- file.path(out_dir, "weekday")
+hour_dir <- file.path(out_dir, "hour")
+dir.create(month_dir, recursive = TRUE, showWarnings = FALSE)
+dir.create(weekday_dir, recursive = TRUE, showWarnings = FALSE)
+dir.create(hour_dir, recursive = TRUE, showWarnings = FALSE)
+
 models <- readRDS(here("models", "final_glm_negbin_by_team.rds"))
 
 focus_teams <- c(
@@ -38,8 +45,7 @@ team_colors <- c(
   "Team SE 1, Travelcare" = "#3E3E3E",
   "Team SE 2, Travelcare" = "#2E9A5D",
   "Team NO 1, Travelcare" = "#2A6F97",
-  "Team FI 1, Travelcare" = "#8E5C9E",
-  "External key" = "#E3B23C"
+  "Team FI 1, Travelcare" = "#8E5C9E"
 )
 
 build_profile <- function(mod, team, feature) {
@@ -98,33 +104,6 @@ profiles <- map_dfr(
   }
 )
 
-external_weekday_path <- here("analysis_extra", "weekday_external_key.csv")
-if (file.exists(external_weekday_path)) {
-  weekday_map <- c(
-    "mandag" = "Mon",
-    "tirsdag" = "Tue",
-    "onsdag" = "Wed",
-    "torsdag" = "Thu",
-    "fredag" = "Fri",
-    "lørdag" = "Sat",
-    "søndag" = "Sun"
-  )
-  
-  external_weekday <- read_csv(external_weekday_path, show_col_types = FALSE) %>%
-    transmute(
-      team = "External key",
-      feature = "weekday",
-      index = tolower(weekday),
-      index_value = as.numeric(index_value)
-    ) %>%
-    mutate(index = recode(index, !!!weekday_map)) %>%
-    filter(!is.na(index))
-  
-  if (nrow(external_weekday) > 0) {
-    profiles <- bind_rows(profiles, external_weekday)
-  }
-}
-
 write_csv(profiles, file.path(out_dir, "seasonality_profiles.csv"))
 
 month_df <- profiles %>%
@@ -140,7 +119,7 @@ p_month <- ggplot(month_df, aes(month, index_value, group = team, colour = team)
   scale_colour_manual(values = team_colors) +
   scale_y_continuous(labels = number_format(accuracy = 0.01)) +
   labs(
-    title = "Sæsonprofil: månedseffekt (normaliseret)",
+    title = "Månedsprofil pr. team – ujævn sæson på tværs af teams",
     x = "Måned",
     y = "Indeks (mu / mean)",
     colour = "Team"
@@ -148,7 +127,7 @@ p_month <- ggplot(month_df, aes(month, index_value, group = team, colour = team)
   theme_minimal(base_size = 11) +
   theme(panel.grid.minor = element_blank())
 
-ggsave(file.path(out_dir, "seasonality_month_by_team.png"), p_month,
+ggsave(file.path(month_dir, "seasonality_month_by_team.png"), p_month,
        width = 10, height = 5.5, dpi = 300)
 
 weekday_df <- profiles %>%
@@ -157,13 +136,44 @@ weekday_df <- profiles %>%
     weekday = factor(index, levels = c("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"))
   )
 
-p_weekday <- ggplot(weekday_df, aes(weekday, index_value, group = team, colour = team)) +
+external_key <- read_csv(
+  here("analysis_extra", "weekday_external_key.csv"),
+  show_col_types = FALSE
+) %>%
+  mutate(
+    weekday = recode(
+      weekday,
+      mandag = "Mon",
+      tirsdag = "Tue",
+      onsdag = "Wed",
+      torsdag = "Thu",
+      fredag = "Fri",
+      lørdag = "Sat",
+    søndag = "Sun"
+  ),
+  weekday = factor(weekday, levels = c("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")),
+    team = "Ekstern nøgle"
+  ) %>%
+  select(team, weekday, index_value)
+
+external_key_facet <- external_key %>%
+  select(-team) %>%
+  tidyr::crossing(team = unique(weekday_df$team))
+
+weekday_plot_df <- bind_rows(
+  weekday_df %>% select(team, weekday, index_value),
+  external_key
+)
+
+weekday_colors <- c(team_colors, "Ekstern nøgle" = "#E3B23C")
+
+p_weekday <- ggplot(weekday_plot_df, aes(weekday, index_value, group = team, colour = team)) +
   geom_line(linewidth = 1) +
   geom_point(size = 1.6) +
-  scale_colour_manual(values = team_colors) +
+  scale_colour_manual(values = weekday_colors) +
   scale_y_continuous(labels = number_format(accuracy = 0.01)) +
   labs(
-    title = "Sæsonprofil: ugedagseffekt (normaliseret)",
+    title = "Ugedagsprofil pr. team – ens mønster, men skæv ekstern nøgle",
     x = "Ugedag",
     y = "Indeks (mu / mean)",
     colour = "Team"
@@ -171,7 +181,7 @@ p_weekday <- ggplot(weekday_df, aes(weekday, index_value, group = team, colour =
   theme_minimal(base_size = 11) +
   theme(panel.grid.minor = element_blank())
 
-ggsave(file.path(out_dir, "seasonality_weekday_by_team.png"), p_weekday,
+ggsave(file.path(weekday_dir, "seasonality_weekday_by_team.png"), p_weekday,
        width = 10, height = 5.5, dpi = 300)
 
 hour_df <- profiles %>%
@@ -185,7 +195,7 @@ p_hour <- ggplot(hour_df, aes(hour, index_value, group = team, colour = team)) +
   scale_x_continuous(breaks = seq(0, 23, 2)) +
   scale_y_continuous(labels = number_format(accuracy = 0.01)) +
   labs(
-    title = "Sæsonprofil: timeeffekt (normaliseret)",
+    title = "Døgnprofil pr. team – stabil rytme på tværs af teams",
     x = "Time på dagen",
     y = "Indeks (mu / mean)",
     colour = "Team"
@@ -193,7 +203,7 @@ p_hour <- ggplot(hour_df, aes(hour, index_value, group = team, colour = team)) +
   theme_minimal(base_size = 11) +
   theme(panel.grid.minor = element_blank())
 
-ggsave(file.path(out_dir, "seasonality_hour_by_team.png"), p_hour,
+ggsave(file.path(hour_dir, "seasonality_hour_by_team.png"), p_hour,
        width = 10, height = 5.5, dpi = 300)
 
 # ---------------- Additional variants ----------------
@@ -214,22 +224,29 @@ p_month_facet <- ggplot(month_df, aes(month, index_value, group = 1)) +
   ) +
   facet_base
 
-ggsave(file.path(out_dir, "seasonality_month_facets.png"), p_month_facet,
+ggsave(file.path(month_dir, "seasonality_month_facets.png"), p_month_facet,
        width = 10, height = 7, dpi = 300)
 
 p_weekday_facet <- ggplot(weekday_df, aes(weekday, index_value, group = 1)) +
   geom_line(color = "#2A6F97", linewidth = 0.9) +
   geom_point(color = "#2A6F97", size = 1.4) +
+  geom_line(
+    data = external_key_facet,
+    aes(weekday, index_value, group = 1),
+    color = "#E3B23C",
+    linewidth = 0.9,
+    linetype = "dashed"
+  ) +
   facet_wrap(~ team, scales = "free_y") +
   scale_y_continuous(labels = number_format(accuracy = 0.01)) +
   labs(
-    title = "Ugedagseffekt pr. team (normaliseret) - external key afviger fra modeltrend",
+    title = "Ugedagsprofil pr. team + ekstern nøgle (normaliseret)",
     x = "Ugedag",
     y = "Indeks (mu / mean)"
   ) +
   facet_base
 
-ggsave(file.path(out_dir, "seasonality_weekday_facets.png"), p_weekday_facet,
+ggsave(file.path(weekday_dir, "seasonality_weekday_facets.png"), p_weekday_facet,
        width = 10, height = 7, dpi = 300)
 
 p_hour_facet <- ggplot(hour_df, aes(hour, index_value, group = 1)) +
@@ -245,7 +262,7 @@ p_hour_facet <- ggplot(hour_df, aes(hour, index_value, group = 1)) +
   ) +
   facet_base
 
-ggsave(file.path(out_dir, "seasonality_hour_facets.png"), p_hour_facet,
+ggsave(file.path(hour_dir, "seasonality_hour_facets.png"), p_hour_facet,
        width = 10, height = 7, dpi = 300)
 
 # Heatmaps (team x month/weekday/hour)
@@ -263,7 +280,7 @@ p_month_hm <- ggplot(month_df, aes(month, team, fill = index_value)) +
   ) +
   heat_base
 
-ggsave(file.path(out_dir, "seasonality_month_heatmap.png"), p_month_hm,
+ggsave(file.path(month_dir, "seasonality_month_heatmap.png"), p_month_hm,
        width = 9.5, height = 3.8, dpi = 300)
 
 p_weekday_hm <- ggplot(weekday_df, aes(weekday, team, fill = index_value)) +
@@ -277,7 +294,7 @@ p_weekday_hm <- ggplot(weekday_df, aes(weekday, team, fill = index_value)) +
   ) +
   heat_base
 
-ggsave(file.path(out_dir, "seasonality_weekday_heatmap.png"), p_weekday_hm,
+ggsave(file.path(weekday_dir, "seasonality_weekday_heatmap.png"), p_weekday_hm,
        width = 9.5, height = 3.8, dpi = 300)
 
 p_hour_hm <- ggplot(hour_df, aes(factor(hour), team, fill = index_value)) +
@@ -291,38 +308,8 @@ p_hour_hm <- ggplot(hour_df, aes(factor(hour), team, fill = index_value)) +
   ) +
   heat_base
 
-ggsave(file.path(out_dir, "seasonality_hour_heatmap.png"), p_hour_hm,
+ggsave(file.path(hour_dir, "seasonality_hour_heatmap.png"), p_hour_hm,
        width = 12, height = 3.8, dpi = 300)
-
-# One-pager (3 panels: month/weekday/hour by team)
-month_small <- p_month +
-  theme(
-    legend.position = "none",
-    plot.title = element_text(size = 11)
-  )
-weekday_small <- p_weekday +
-  theme(
-    legend.position = "none",
-    plot.title = element_text(size = 11)
-  )
-hour_small <- p_hour +
-  theme(
-    legend.position = "none",
-    plot.title = element_text(size = 11)
-  )
-
-one_pager <- (month_small / weekday_small / hour_small) +
-  patchwork::plot_annotation(
-    title = "Sæsonprofiler pr. team (normaliseret indeks)",
-    subtitle = "Måned, ugedag og time – sammenlignede profiler på tværs af teams"
-  ) &
-  theme(
-    plot.title = element_text(face = "bold", size = 13),
-    plot.subtitle = element_text(size = 11)
-  )
-
-ggsave(file.path(out_dir, "seasonality_one_pager.png"), one_pager,
-       width = 10, height = 14, dpi = 300)
 
 message("✔ Profiles CSV: ", file.path(out_dir, "seasonality_profiles.csv"))
 message("✔ Plots saved to: ", out_dir)
