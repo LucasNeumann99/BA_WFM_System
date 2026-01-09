@@ -24,7 +24,7 @@ dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 spx_path <- here("data_raw", "Prognosedata_til_SPX_pr_240925.csv")
 spx_raw <- readr::read_delim(spx_path, delim = ";", skip = 1, col_types = readr::cols(.default = "c"))
 spx_raw <- spx_raw %>%
-  select(where(~ !all(is.na(.x)))) %>%
+  dplyr::select(dplyr::where(~ !all(is.na(.x)))) %>%
   mutate(across(everything(), ~ str_trim(as.character(.x))))
 
 spx <- spx_raw %>%
@@ -44,7 +44,7 @@ spx_map <- c(
 )
 
 spx_long <- spx %>%
-  select(Dato, all_of(names(spx_map))) %>%
+  dplyr::select(Dato, all_of(names(spx_map))) %>%
   pivot_longer(cols = -Dato, names_to = "spx_team", values_to = "spx_value") %>%
   mutate(team = recode(spx_team, !!!spx_map)) %>%
   filter(!is.na(spx_value))
