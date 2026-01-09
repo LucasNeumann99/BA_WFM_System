@@ -54,7 +54,9 @@ staff_base <- file.path(paths$output, "Manning")
 teams <- c(
   "Team DK 1, Travelcare",
   "Team FI 1, Travelcare",
-  "Team NO 1, Travelcare"
+  "Team NO 1, Travelcare",
+  "Team SE 1, Travelcare",
+  "Team SE 2, Travelcare"
 )
 
 shift_files <- file.path(staff_base, teams, "staffing", "shift_plan_optimized_v2.csv")
